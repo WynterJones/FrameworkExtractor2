@@ -1,6 +1,6 @@
 # Handoff — Framework Extractor → OverSkill (import path)
 
-**Step 0 — import.** Push this repo public, then https://www.overskill.com/account/app_imports/new → paste the repo URL → check the analysis screen says **1 entity (FrameworkProject)**, 3 pages (/, /framework/:id, *), name "Framework Extractor" → Import. Wait for the conversion report (≈ 1,200–2,000 credits, one generation turn). The repo can go private right after.
+**Step 0 — do NOT import this repo again.** The 2026-10-28 import (keWLWj) hit the one-turn output cap twice ("reply got cut off before I could save any code changes"), wrote nothing, and cost ~18,700 credits. The app it created (JBYonj, "Framework Extractor") is empty but usable as the target. Build it rung by rung in that app's editor instead, starting with 01 (attach prd.md + screenshot.jpg); 01 now has to build the shell and screens, not just close gaps.
 
 **Then, in the app's editor chat, in this order.** One file = one message. Wait for the Completed card before the next. "Guidance only:" → re-send with a build verb. Keep ONE model for the whole ladder (switching clears the prompt cache); Claude Opus (or OverSkill Max) for everything. Activate Happy Hour first.
 

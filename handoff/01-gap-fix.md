@@ -1,11 +1,10 @@
 <!-- send: editor chat · model: Claude Opus · thinking: Max · attach: prd.md, public/screenshot.jpg · wait for: Completed card -->
-Bring this imported app up to the attached spec. The attached prd.md is the complete product spec and the attached screenshot.jpg is the target look of the workspace; match both.
+Build the app shell and both screens from the attached spec. The attached prd.md is the complete product spec and the attached screenshot.jpg is the target look of the workspace; match both.
 
-Context: this app was rebuilt from a GitHub import of the prototype repo. The import carried the routes (/, /framework/:id), the framework_project entity, the theme tokens and the first part of each page file. The PRD sections "2. Screens" and "6. Design" have everything the import could not see.
+Context: this app was created by an import that failed before writing any files, so start from the scaffold. The PRD sections "2. Screens" (2.0 shell, 2.1 dashboard, 2.2 workspace) and "6. Design" have everything.
 
 Build:
-- Read prd.md §2 and §6 in full. List every difference between the current app and the spec (layout regions, copy, states, theme tokens, fonts, the 3D primary button, the resizable two-pane workspace, the centred 750px chat column, the Framework and Teaching plan tabs) before changing anything.
-- Fix every listed difference. Use the exact copy from the PRD. Dark theme by default with the tokens in §6.
+- The sidebar shell (PRD §2.0), the dashboard with the composer card and the four template buttons (§2.1), and the workspace with the layout switch, the chat column and the Framework / Teaching plan tabs (§2.2). Use the exact copy from the PRD. Dark theme by default with the tokens in §6.
 - Keep every action stubbed with a toast that names the action (for example "Stubbed: send message"); do not build endpoints, AI calls or data wiring yet.
 - Use placeholder data from a single file `src/lib/placeholder.ts` exporting `PLACEHOLDER_PROJECTS` (two framework_project rows copied from the PRD §3 shape, one in Phase 2 with a full teaching step, one mid Phase 1).
 
