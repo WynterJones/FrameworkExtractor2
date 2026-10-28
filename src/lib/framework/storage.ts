@@ -1,6 +1,6 @@
 /** CRUD for the `framework_project` entity. On OverSkill only the import of `overskill` changes. */
 import { overskill } from "@/lib/auth";
-import { DEFAULT_FRAMEWORK_TITLE, initialFrameworkState, type FrameworkProject, type FrameworkSetup } from "./types";
+import { DEFAULT_FRAMEWORK_TITLE, initialFrameworkState, type FrameworkProject, type FrameworkSetup } from "./contract";
 
 const table = () => overskill.entities.framework_project;
 
@@ -12,7 +12,7 @@ export async function createProject(): Promise<FrameworkProject> {
   const [prior] = await listProjects();
   const s = prior?.setup;
   const carried: FrameworkSetup = s?.character_id && s.voice_id && s.customer_avatar_id ? s : {};
-  return table().create({ title: DEFAULT_FRAMEWORK_TITLE, source: "empty", setup: carried, state: initialFrameworkState() }) as Promise<FrameworkProject>;
+  return table().create({ title: DEFAULT_FRAMEWORK_TITLE, source: "empty", setup: carried, state: initialFrameworkState(), archived: false }) as Promise<FrameworkProject>;
 }
 
 export const updateProject = (id: string, patch: Partial<Pick<FrameworkProject, "title" | "source" | "setup" | "state">>) =>

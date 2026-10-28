@@ -1,7 +1,7 @@
 import { AudioLines, Target, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
-import type { FrameworkSetup } from "@/lib/framework/types";
+import type { FrameworkSetup } from "@/lib/framework/contract";
 
 /** Attractive Character / Voice / Customer Avatar — the voice and audience the framework is extracted for. */
 export function SetupBar({ setup, onChange, disabled }: { setup: FrameworkSetup; onChange: (p: Partial<FrameworkSetup>) => void; disabled?: boolean }) {

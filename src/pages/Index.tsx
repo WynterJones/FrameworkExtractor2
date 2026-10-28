@@ -1,3 +1,24 @@
+/**
+ * SCREEN: / — Project list.
+ *
+ * Header: brand mark "Framework Extractor" (compass icon) left, nav link
+ * "Frameworks", avatar "J" right. Hero card: h1 "Framework Extractor", the
+ * pitch paragraph, a pill "N frameworks", the logo at the right. Controls row:
+ * primary "New Project" button (plus icon, "Creating…" while busy) and a search
+ * input ("Search projects…"). Then one row per framework_project: title,
+ * "N steps mapped · Oct 28, 2026" (or "No steps yet"), a trash icon that swaps
+ * the row for an inline confirm pane ("Delete this framework?" Cancel / Delete),
+ * and a primary "Open →" button.
+ *
+ * Actions: New Project → create a framework_project (title "Untitled
+ * Framework", source "empty", setup copied from the most recent project when
+ * complete, initial state) → navigate to /framework/:id. Delete → archived:
+ * true (never a hard delete). Search filters by title on the client.
+ *
+ * States: loading ("Loading your frameworks…"), error (card + "Try again"),
+ * empty ("Pull your first framework out of your head" + New Project),
+ * no match ("No frameworks match “q”").
+ */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Boxes, Compass, Loader2, Plus, Search, Trash2 } from "lucide-react";
@@ -6,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { onEntityChange } from "@/lib/mock/entities";
 import { createProject, deleteProject, listProjects } from "@/lib/framework/storage";
-import type { FrameworkProject } from "@/lib/framework/types";
+import type { FrameworkProject } from "@/lib/framework/contract";
 import "@/lib/mock/data";
 
 const stepCount = (p: FrameworkProject) => p.state?.framework?.named_steps?.length || p.state?.framework?.raw_steps?.length || 0;

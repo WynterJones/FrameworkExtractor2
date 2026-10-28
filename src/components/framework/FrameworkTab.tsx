@@ -2,7 +2,7 @@ import { Compass } from "lucide-react";
 import { EditableText } from "./EditableText";
 import { StatusPill, StepNum } from "./StatusPill";
 import { frameworkStageHasData } from "@/lib/framework/protocol";
-import { FRAMEWORK_STAGE_KEYS, type FrameworkAnchor, type FrameworkData, type FrameworkStageKey } from "@/lib/framework/types";
+import { FRAMEWORK_STAGE_KEYS, type FrameworkAnchor, type FrameworkData, type FrameworkStageKey } from "@/lib/framework/contract";
 
 const STAGE_META: Record<FrameworkStageKey, { num: number; title: string; sub: string }> = {
   anchor: { num: 1, title: "Anchor", sub: "Confirm niche, dream customer, and the single result." },
@@ -66,8 +66,7 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     case "naming_framework":
       return (
         <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">Framework name</span>
-          <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="-ml-2 mt-1 font-display text-3xl font-bold leading-tight tracking-tight" onChange={(v) => onChange({ framework_name: v })} />
+          <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="-ml-2 font-display text-3xl font-bold leading-tight tracking-tight" onChange={(v) => onChange({ framework_name: v })} />
           <EditableText value={framework.framework_tagline ?? ""} ariaLabel="Framework tagline" placeholder="Add a one-line tagline (optional)" className="-ml-2 text-sm text-muted-foreground" onChange={(v) => onChange({ framework_tagline: v })} />
         </div>
       );

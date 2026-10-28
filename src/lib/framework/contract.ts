@@ -1,5 +1,8 @@
 /**
- * Framework Extractor — shared TypeScript contract.
+ * Framework Extractor — shared TypeScript contract (nested JSON shapes).
+ *
+ * These are NOT entities. The one entity, `framework_project`, is declared in
+ * src/types.ts; `setup` and `state` here are the shapes of its two JSON columns.
  *
  * Mirrors the production One2Many `fe_projects` row: `setup` and `state` are
  * JSON columns. Every layer imports from here — storage, the fake Creative
@@ -116,16 +119,7 @@ export interface FrameworkProjectState {
   teaching: TeachingData;
 }
 
-/** The `framework_project` entity row (plus the platform-managed id/timestamps). */
-export interface FrameworkProject {
-  id: string;
-  title: string;
-  source: FrameworkSource;
-  setup: FrameworkSetup;
-  state: FrameworkProjectState;
-  created_at: string;
-  updated_at: string;
-}
+export type { FrameworkProject } from "@/types";
 
 export const DEFAULT_FRAMEWORK_TITLE = "Untitled Framework";
 

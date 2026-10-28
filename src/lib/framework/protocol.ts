@@ -33,7 +33,7 @@ import {
   type TeachingComponentKey,
   type TeachingData,
   type TeachingStep,
-} from "./types.ts";
+} from "./contract.ts";
 
 export const FE_CREDITS_PER_TURN = 3;
 export const FE_CHAT_TURN_LIMIT = 300;

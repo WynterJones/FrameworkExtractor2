@@ -1,5 +1,5 @@
 /** Serialise a project to the downloadable Framework Brief (markdown). Pure; mirrors production. */
-import type { FrameworkProject, ScaleVariants, TeachingStep } from "./types.ts";
+import type { FrameworkProject, ScaleVariants, TeachingStep } from "./contract.ts";
 
 export const clean = (v: string | null | undefined) => (v ?? "").trim();
 

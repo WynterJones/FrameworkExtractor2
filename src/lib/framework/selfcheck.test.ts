@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { applyFeStatePatches, extractFeStatePatches, stripFeState } from "./protocol.ts";
-import { initialFrameworkState } from "./types.ts";
+import { initialFrameworkState } from "./contract.ts";
 import { creativeDirectorTurn, replayInterview } from "../mock/interview.ts";
 
 test("fe-state blocks parse, strip, and merge", () => {

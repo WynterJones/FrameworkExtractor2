@@ -9,7 +9,7 @@ import {
   detectGenerationFailure, extractFeStatePatches, stripFeState,
   FE_CHAT_TURN_LIMIT, FE_CREDITS_PER_TURN, FE_LIMIT_WARN_REMAINING, type FeStatePatch,
 } from "@/lib/framework/protocol";
-import type { ChatMessage, FrameworkProjectState } from "@/lib/framework/types";
+import type { ChatMessage, FrameworkProjectState } from "@/lib/framework/contract";
 
 /**
  * The Creative Director chat. One continuous thread across both phases.

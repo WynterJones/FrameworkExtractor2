@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import type { StageStatus } from "@/lib/framework/types";
+import type { StageStatus } from "@/lib/framework/contract";
 
 const LABEL: Record<StageStatus, string> = { done: "Done", active: "In progress", pending: "Up next" };
 

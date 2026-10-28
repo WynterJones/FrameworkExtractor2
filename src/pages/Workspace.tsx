@@ -1,3 +1,38 @@
+/**
+ * SCREEN: /framework/:id — the two-pane workspace (fixed to the viewport, each
+ * pane scrolls internally; stacks under 1024px).
+ *
+ * Header: "← Back" · editable title (pencil focuses it) · autosave chip
+ * (Saving… / Saved / Save failed · Retry) · "Download ▾" dropdown (Markdown
+ * .md, PowerPoint .pptx). Everything autosaves (1 s debounce, flush on
+ * unmount); there is no Save button and no Library button.
+ *
+ * LEFT — the Creative Director chat, one centred column max-width 750px,
+ * ChatGPT style: setup bar (three selects: Attractive Character, Voice,
+ * Customer Avatar), the thread (assistant = plain markdown text, no avatar,
+ * no bubble; user = right-aligned muted bubble), a rounded pill composer
+ * (auto-growing textarea, round Send button that becomes Stop while
+ * streaming), and a quiet meter line "N / 300 messages" + "3 credits per
+ * reply". A brand-new project shows a start card ("Set the voice and audience,
+ * then start" + "Start building your framework"). Each reply streams; the
+ * trailing <fe-state> JSON patch is stripped from the visible text and merged
+ * into project state (src/lib/framework/protocol.ts) so the right pane fills
+ * in live. "Generated {Component} for "{Step}"." first lines render as a pill
+ * with a green check; a phase: 2 patch inserts a "Framework locked" divider
+ * and switches the right pane to the Teaching plan.
+ *
+ * RIGHT — underline tabs "Framework" / "Teaching plan" (status dot each), a
+ * ghost button that hides the chat, the output (centred, max 750px), and a
+ * footer "20 credits" + ghost "Regenerate" (confirm dialog, then re-derive the
+ * framework + teaching plan from the transcript). Framework tab: five stage
+ * sections (Anchor, Origin Story, Hypothesis, Naming The Steps, Naming The
+ * Framework) with status badges, every captured field inline-editable.
+ * Teaching plan tab: "Step N" stepper, the step name as heading, a trash icon
+ * (remove step), "Generate all four" (auto-fill via the chat), then Story /
+ * Strategy / Tactics / Case Study sections with badges and inline editing.
+ *
+ * The full spec is prd.md at the repo root.
+ */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Download, FileText, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
@@ -15,7 +50,7 @@ import { applyFeStatePatches, FE_REGENERATE_CREDITS, isInterviewStarted, normali
 import { fakeAI } from "@/lib/mock/ai";
 import { replayInterview } from "@/lib/mock/interview";
 import { REGENERATE_SHELL } from "@/lib/framework/prompts";
-import { DEFAULT_FRAMEWORK_TITLE, FRAMEWORK_STAGE_KEYS, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/types";
+import { DEFAULT_FRAMEWORK_TITLE, FRAMEWORK_STAGE_KEYS, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
 
 type Tab = "framework" | "teaching";
 type SaveState = "idle" | "saving" | "saved" | "error";

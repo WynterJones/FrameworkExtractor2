@@ -5,7 +5,7 @@
  * read-only lists the host platform supplies in production.
  */
 import { overskill } from "@/lib/auth";
-import { initialFrameworkState, type ChatMessage, type FrameworkProject, type FrameworkProjectState } from "@/lib/framework/types";
+import { initialFrameworkState, type ChatMessage, type FrameworkProject, type FrameworkProjectState } from "@/lib/framework/contract";
 
 export interface AttractiveCharacter { id: string; name: string; description: string }
 export interface Voice { id: string; character_id: string; name: string; description: string }
@@ -131,8 +131,8 @@ const chiroState: FrameworkProjectState = {
 };
 
 const SEED: Row[] = [
-  { title: "The Momentum Method", source: "ai-interview", setup: { character_id: "ac_1", voice_id: "v_1", customer_avatar_id: "av_1" }, state: momentumState },
-  { title: "Untitled Framework", source: "ai-interview", setup: { character_id: "ac_2", voice_id: "v_3", customer_avatar_id: "av_3" }, state: chiroState },
+  { title: "The Momentum Method", source: "ai-interview", setup: { character_id: "ac_1", voice_id: "v_1", customer_avatar_id: "av_1" }, state: momentumState, archived: false },
+  { title: "Untitled Framework", source: "ai-interview", setup: { character_id: "ac_2", voice_id: "v_3", customer_avatar_id: "av_3" }, state: chiroState, archived: false },
 ];
 
 overskill.entities.framework_project.seed(SEED);

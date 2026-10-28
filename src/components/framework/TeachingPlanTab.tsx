@@ -3,7 +3,7 @@ import { Check, GraduationCap, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditableText } from "./EditableText";
 import { StatusPill, StepNum } from "./StatusPill";
-import { TEACHING_COMPONENT_KEYS, type TeachingComponentKey, type TeachingData, type TeachingStep } from "@/lib/framework/types";
+import { TEACHING_COMPONENT_KEYS, type TeachingComponentKey, type TeachingData, type TeachingStep } from "@/lib/framework/contract";
 
 const META: Record<TeachingComponentKey, { num: number; title: string; sub: string }> = {
   story: { num: 1, title: "Story", sub: "How you earned this lesson — open the teaching with this scene." },

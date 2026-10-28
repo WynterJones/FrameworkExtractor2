@@ -10,7 +10,7 @@
  * and for Regenerate: REGENERATE_SHELL + voice block + renderCurrentState.
  */
 
-import type { FrameworkData, ProjectPhase, TeachingData } from "./types";
+import type { FrameworkData, ProjectPhase, TeachingData } from "./contract";
 
 export const FRAMEWORK_HYPOTHESIS_SKILL = `# Framework Hypothesis
 

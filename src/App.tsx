@@ -1,3 +1,10 @@
+/**
+ * Framework Extractor — routes.
+ *   /                → Index      (project list)
+ *   /framework/:id   → Workspace  (two-pane Creative Director interview)
+ *   *                → NotFound
+ * Dark theme by default (near-black, neutral greys, ocean-blue primary).
+ */
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";

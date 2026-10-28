@@ -22,7 +22,7 @@ import {
   type ScaleVariants,
   type TeachingComponentKey,
   type TeachingStep,
-} from "../framework/types.ts";
+} from "../framework/contract.ts";
 
 const block = (patch: FeStatePatch) => `\n\n<fe-state>\n${JSON.stringify(patch)}\n</fe-state>`;
 
