@@ -52,10 +52,10 @@ function GenCard({ generating, label }: { generating: boolean; label: string }) 
     generating ? (
       <p className="text-[15px]"><span className="text-shimmer">{label}</span></p>
     ) : (
-      <div className="inline-flex items-center gap-2.5 rounded-full border border-border px-3.5 py-1.5 text-sm">
-        <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} />
-        <span className="font-medium">{label}</span>
-        <span className="text-muted-foreground">added to the plan</span>
+      <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+        <Check className="h-3 w-3 text-emerald-500/80" strokeWidth={2.5} />
+        <span>{label}</span>
+        <span className="text-muted-foreground/60">· added to the plan</span>
       </div>
     )
   );
@@ -177,7 +177,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
-        <div className="mx-auto flex w-full max-w-[750px] flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-5 sm:py-6">
+        <div className="mx-auto flex w-full max-w-[750px] flex-col gap-7 px-4 py-6 sm:gap-9 sm:px-5 sm:py-8">
           {visible.length === 0 && !streaming && (started ? (
             <p className="text-[15px]"><span className="text-shimmer">Getting your Creative Director ready…</span></p>
           ) : (
@@ -191,19 +191,19 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
           ))}
           {visible.map((m) => {
             if (m.phase_divider) return (
-              <div key={m.id} className="flex items-center gap-3 py-1 text-xs text-muted-foreground">
-                <span className="h-px flex-1 bg-border" /><Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} /><span><strong className="font-semibold text-foreground">Framework locked</strong> · Phase 2, the teaching plan</span><span className="h-px flex-1 bg-border" />
+              <div key={m.id} className="flex items-center gap-3 py-2 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border/60" /><Check className="h-3 w-3 text-emerald-500/80" strokeWidth={2.5} /><span><span className="font-medium text-foreground/80">Framework locked</span> · Phase 2, the teaching plan</span><span className="h-px flex-1 bg-border/60" />
               </div>
             );
             if (m.role === "user") return (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] space-y-2 rounded-3xl bg-muted px-4 py-2.5 text-[15px] leading-relaxed">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
+                <div className="max-w-[85%] space-y-2 rounded-3xl bg-muted/70 px-4 py-3 text-[15px] leading-relaxed">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
               </div>
             );
             const { gen, rest } = splitGenLine(m.content);
             if (m.streaming && (!m.content.trim() || gen)) return <GenCard key={m.id} generating label={gen ? "Writing it into the plan…" : "Thinking…"} />;
             return (
-              <div key={m.id} className="space-y-3">
+              <div key={m.id} className="space-y-4">
                 {gen && <GenCard generating={false} label={gen} />}
                 {rest && <div className="text-[15px] leading-7 [&_p]:text-[15px] [&_p]:leading-7 [&_ul]:text-[15px] [&_ol]:text-[15px]"><Markdown text={rest} /></div>}
               </div>
@@ -226,7 +226,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
               <p className="mt-0.5 text-sm text-muted-foreground">You've used all {FE_CHAT_TURN_LIMIT} messages for this framework. Your framework and teaching plan are saved — start a new project to keep going.</p>
             </div>
           ) : (
-            <form onSubmit={submit} className="flex items-end gap-2 rounded-3xl border border-border bg-card px-4 py-2.5 shadow-sm focus-within:border-foreground/30">
+            <form onSubmit={submit} className="flex items-end gap-2 rounded-3xl border border-border bg-card px-4 py-2.5 shadow-[0_8px_24px_-12px_hsl(0_0%_0%/0.6)] focus-within:border-foreground/30">
               <textarea ref={inputRef} value={input} rows={1} disabled={streaming || starting || (!started && !setupComplete(setup))} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(e); } }}
                 placeholder={started ? "Type your answer…" : setupComplete(setup) ? "Answer here to begin, or tap Start above…" : "Pick the voice and audience above to begin"} aria-label="Type a message"
                 className="max-h-[220px] min-h-[28px] flex-1 resize-none bg-transparent py-1 text-[15px] leading-7 placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"

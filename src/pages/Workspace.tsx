@@ -220,14 +220,14 @@ export default function Workspace() {
   const { state } = project;
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
-      <header className="shrink-0 border-b border-border bg-card px-3 py-2 sm:px-4 sm:py-2.5">
+      <header className="shrink-0 bg-background px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-1">
             <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 46))} className="w-auto min-w-[6ch] max-w-[46ch] truncate rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
             <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
           </div>
           <div className="flex items-center gap-3">
-            <div role="group" aria-label="Layout" className="inline-flex rounded-lg border border-border bg-card p-0.5">
+            <div role="group" aria-label="Layout" className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
               {([["chat", MessageSquare, "Chat only"], ["split", Columns2, "Chat and output"], ["output", PanelRight, "Output only"]] as const).filter(([v]) => !(isMobile && v === "split")).map(([v, Icon, label]) => (
                 <button key={v} type="button" aria-pressed={effectiveView === v} title={label} aria-label={label} onClick={() => { viewTouched.current = true; setView(v); }} className={`grid h-7 w-8 place-items-center rounded-md transition-colors ${effectiveView === v ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                   <Icon className="h-3.5 w-3.5" />
@@ -252,18 +252,18 @@ export default function Workspace() {
 
       <PanelGroup ref={panelGroup} direction="horizontal" className="flex h-full w-full min-h-0 flex-1" onLayout={(sizes) => { if (sizes[0] >= 30 && sizes[1] >= 30) lastSplit.current = sizes; }}>
         <ResizablePanel defaultSize={100} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
-        <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+        <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
           <div className="flex min-h-0 flex-1 flex-col">
             <FrameworkChat ref={chatRef} state={state} setup={project.setup} onSetupChange={patchSetup} voiceBlock={voiceBlock} firstAnswer={handoff.firstAnswer} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
               onMessagesChange={(next) => patchState((s) => ({ ...s, chat_messages: next }))} onStatePatch={handleStatePatch} onStreamingChange={handleStreamingChange} />
           </div>
         </section>
         </ResizablePanel>
-        <ResizableHandle withHandle className={`w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary ${effectiveView === "split" ? "" : "hidden"}`} />
+        <ResizableHandle withHandle className={`w-px bg-transparent after:w-3 hover:bg-primary/60 data-[resize-handle-active]:bg-primary ${effectiveView === "split" ? "" : "hidden"}`} />
         <ResizablePanel defaultSize={0} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
-        <section aria-label="Framework output" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card">
-          <header className="flex shrink-0 justify-center border-b border-border px-4 py-2.5 sm:px-6 sm:py-3">
-            <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border bg-background/60 p-1">
+        <section aria-label="Framework output" className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-surface shadow-[0_0_0_1px_hsl(0_0%_100%/0.06),-16px_0_40px_-12px_hsl(0_0%_0%/0.75)] md:rounded-tl-2xl">
+          <header className="flex shrink-0 justify-center border-b border-border/60 px-4 py-2.5 sm:px-6 sm:py-3">
+            <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border/60 bg-background/40 p-1">
               {(["framework", "teaching"] as const).map((t) => (
                 <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm transition-colors active:scale-[0.98] ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
                   <span className={`h-2 w-2 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching plan"}

@@ -18,6 +18,7 @@ All colors MUST be HSL.
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+    --surface: 0 0% 100%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
@@ -56,13 +57,16 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 0 0% 4%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 96%;
 
-    --card: 0 0% 9%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 11%;
+    /* The output pane: a sheet of paper laid over the app. */
+    --surface: 0 0% 13%;
+
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 96%;
 
     --primary: 199 89% 48%;
@@ -70,20 +74,20 @@ All colors MUST be HSL.
     --primary-deep: 199 89% 36%;
     --primary-bright: 199 89% 54%;
 
-    --secondary: 0 0% 12%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 96%;
 
-    --muted: 0 0% 12%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 62%;
 
-    --accent: 0 0% 14%;
+    --accent: 0 0% 17%;
     --accent-foreground: 0 0% 96%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
+    --border: 0 0% 19%;
+    --input: 0 0% 19%;
     --ring: 199 89% 48%;
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 90%;
