@@ -1,0 +1,42 @@
+import { AudioLines, Target, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
+import type { FrameworkSetup } from "@/lib/framework/types";
+
+/** Attractive Character / Voice / Customer Avatar — the voice and audience the framework is extracted for. */
+export function SetupBar({ setup, onChange, disabled }: { setup: FrameworkSetup; onChange: (p: Partial<FrameworkSetup>) => void; disabled?: boolean }) {
+  const voices = VOICES.filter((v) => v.character_id === setup.character_id);
+  const Field = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
+    <label className="flex min-w-0 flex-1 items-center gap-2">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground">{icon}</span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
+        {children}
+      </span>
+    </label>
+  );
+  const trigger = "h-7 border-0 bg-transparent px-0 text-[13px] font-semibold shadow-none focus:ring-0 [&>span]:truncate";
+  return (
+    <div className="flex flex-col gap-3 border-b border-border bg-foreground/[0.025] px-5 py-2 sm:flex-row sm:items-center sm:gap-5">
+      <Field icon={<User className="h-3.5 w-3.5" />} label="Attractive Character">
+        <Select value={setup.character_id ?? ""} disabled={disabled} onValueChange={(v) => onChange({ character_id: v, voice_id: null })}>
+          <SelectTrigger className={trigger}><SelectValue placeholder="Not set" /></SelectTrigger>
+          <SelectContent>{CHARACTERS.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+        </Select>
+      </Field>
+      <Field icon={<AudioLines className="h-3.5 w-3.5" />} label="Voice">
+        <Select value={setup.voice_id ?? ""} disabled={disabled || !setup.character_id} onValueChange={(v) => onChange({ voice_id: v })}>
+          <SelectTrigger className={trigger}><SelectValue placeholder={setup.character_id ? "Not set" : "Pick a character first"} /></SelectTrigger>
+          <SelectContent>{voices.map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
+        </Select>
+      </Field>
+      <Field icon={<Target className="h-3.5 w-3.5" />} label="Customer Avatar">
+        <Select value={setup.customer_avatar_id ?? ""} disabled={disabled} onValueChange={(v) => onChange({ customer_avatar_id: v })}>
+          <SelectTrigger className={trigger}><SelectValue placeholder="Not set" /></SelectTrigger>
+          <SelectContent>{AVATARS.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
+        </Select>
+      </Field>
+    </div>
+  );
+}
+export default SetupBar;

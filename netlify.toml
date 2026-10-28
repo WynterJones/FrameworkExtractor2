@@ -1,0 +1,4 @@
+# Each prototype is its own Netlify site. Build from this folder.
+[build]
+  command = "npm install && npm run build"
+  publish = "dist"
