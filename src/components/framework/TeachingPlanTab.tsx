@@ -70,10 +70,12 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
           <h3 className="font-display text-xl font-semibold tracking-tight">{step.name || `Step ${i + 1}`}</h3>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-destructive" onClick={() => onRemoveStep(i)} title={`Remove ${step.name}`}><Trash2 className="h-3.5 w-3.5" /> Remove</Button>
-          <Button variant="outline" size="sm" className="h-8" disabled={chatStreaming || fullyDone} onClick={() => onAutoFill(i)} title={fullyDone ? "Every component for this step is done" : "Have the Creative Director draft Story, Strategy, Tactics and Case Study for this step"}>
-            <Sparkles className="h-3.5 w-3.5" /> {fullyDone ? "Step complete" : "Generate all four"}
-          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onRemoveStep(i)} aria-label={`Remove ${step.name}`} title={`Remove ${step.name}`}><Trash2 className="h-3.5 w-3.5" /></Button>
+          {!fullyDone && (
+            <Button variant="outline" size="sm" className="h-8" disabled={chatStreaming} onClick={() => onAutoFill(i)} title="Have the Creative Director draft Story, Strategy, Tactics and Case Study for this step">
+              <Sparkles className="h-3.5 w-3.5" /> Generate all four
+            </Button>
+          )}
         </div>
       </div>
 
