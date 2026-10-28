@@ -47,7 +47,8 @@ export default function Index() {
           <p className="max-w-xl text-base text-muted-foreground sm:text-lg">A Creative Director interviews you on how you actually think, work and win, then turns the pattern into a step-by-step framework you can teach, sell or scale.</p>
         </div>
 
-        <section className="relative mt-8 w-full max-w-2xl rounded-3xl border border-border bg-card p-5 shadow-[0_24px_60px_-24px_hsl(0_0%_0%/0.6)] sm:mt-10 sm:p-8">
+        <section className="relative mt-8 w-full max-w-2xl overflow-hidden rounded-3xl border border-white/[0.08] bg-card p-5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.06),0_30px_80px_-30px_hsl(0_0%_0%/0.8)] sm:mt-10 sm:p-8">
+          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[32rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
           <SetupFields setup={setup} onChange={(p) => setSetup((s) => ({ ...s, ...p }))} />
           <Button size="lg" className="mt-6 h-12 w-full text-base active:scale-[0.98] transition-transform duration-150" disabled={!setupComplete(setup) || !!creating} onClick={() => void start()}>
             {creating === "blank" ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating…</> : <>Start building your framework <ArrowRight className="h-4 w-4" /></>}
@@ -58,7 +59,7 @@ export default function Index() {
             <p className="mb-3 text-xs font-medium text-muted-foreground">Need a starting point? Begin from a template; the interview picks it up from there.</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {TEMPLATES.map((t) => (
-                <button key={t.id} type="button" disabled={!setupComplete(setup) || !!creating} onClick={() => void start(t)} className="flex items-start gap-3 rounded-xl border border-border bg-background px-3.5 py-3 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99]">
+                <button key={t.id} type="button" disabled={!setupComplete(setup) || !!creating} onClick={() => void start(t)} className="flex items-start gap-3 rounded-xl border border-border bg-background px-3.5 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-muted/40 hover:shadow-[0_12px_24px_-12px_hsl(0_0%_0%/0.7)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 active:scale-[0.99]">
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold">{t.name}</span>
                     <span className="block text-xs text-muted-foreground">{t.blurb}</span>

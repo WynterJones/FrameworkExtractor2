@@ -40,7 +40,9 @@ export default function Shell() {
     setPendingDelete(null);
   };
 
-  const item = "group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors";
+  const item = "group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors";
+  const active = "bg-muted/70 font-medium text-foreground before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary";
+  const idle = "text-muted-foreground hover:bg-muted/40 hover:text-foreground";
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background md:flex-row">
       {/* Phone top bar: menu + brand. The sidebar slides in over the page. */}
@@ -71,7 +73,7 @@ export default function Shell() {
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-          <NavLink to="/" end title="Dashboard" className={({ isActive }) => `${item} ${isActive ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"} ${collapsed ? "justify-center" : ""}`}>
+          <NavLink to="/" end title="Dashboard" className={({ isActive }) => `${item} ${isActive ? active : idle} ${collapsed ? "justify-center" : ""}`}>
             <LayoutDashboard className="h-4 w-4 shrink-0" />{!collapsed && "Dashboard"}
           </NavLink>
 
@@ -81,8 +83,8 @@ export default function Shell() {
           </div>
           {projects.length === 0 && !collapsed && <p className="px-2.5 py-2 text-xs text-muted-foreground">No frameworks yet.</p>}
           {projects.map((p) => (
-            <NavLink key={p.id} to={`/framework/${p.id}`} title={p.title} className={({ isActive }) => `${item} ${isActive ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"} ${collapsed ? "justify-center" : ""}`}>
-              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-border text-[10px] font-semibold tabular-nums">{(p.state.framework.named_steps?.length || p.state.framework.raw_steps?.length || 0) || "·"}</span>
+            <NavLink key={p.id} to={`/framework/${p.id}`} title={p.title} className={({ isActive }) => `${item} ${isActive ? active : idle} ${collapsed ? "justify-center" : ""}`}>
+              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md text-[10px] font-semibold tabular-nums ${p.state.phase === 2 ? "bg-emerald-500/15 text-emerald-400" : "bg-muted/80 text-muted-foreground"}`}>{(p.state.framework.named_steps?.length || p.state.framework.raw_steps?.length || 0) || "·"}</span>
               {!collapsed && <span className="min-w-0 flex-1 truncate">{p.title}</span>}
               {!collapsed && (
                 <button type="button" aria-label={`Delete ${p.title}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPendingDelete(p); }} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100">

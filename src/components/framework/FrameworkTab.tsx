@@ -94,7 +94,7 @@ export function FrameworkTab({ framework, onChange }: { framework: FrameworkData
           <li key={key} className={`py-6 first:pt-2 ${status === "pending" ? "opacity-50" : ""}`}>
             <header className="mb-3 flex items-center gap-3">
               <StepNum n={meta.num} />
-              <h4 className="flex-1 text-[15px] font-semibold">{meta.title}</h4>
+              <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>
               <StatusPill status={status} />
             </header>
             {has ? <StageBody stageKey={key} framework={framework} onChange={onChange} /> : (

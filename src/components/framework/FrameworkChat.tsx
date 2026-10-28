@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Check, RefreshCw, Send, Square, Zap } from "lucide-react";
+import { Check, RefreshCw, Send, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "./Markdown";
 import { fakeStream } from "@/lib/mock/ai";
@@ -7,7 +7,7 @@ import { creativeDirectorTurn } from "@/lib/mock/interview";
 import { buildChatSystemPrompt } from "@/lib/framework/prompts";
 import {
   detectGenerationFailure, extractFeStatePatches, stripFeState,
-  FE_CHAT_TURN_LIMIT, FE_CREDITS_PER_TURN, FE_LIMIT_WARN_REMAINING, type FeStatePatch,
+  FE_CHAT_TURN_LIMIT, type FeStatePatch,
 } from "@/lib/framework/protocol";
 import type { ChatMessage, FrameworkProjectState, FrameworkSetup } from "@/lib/framework/contract";
 import { SetupFields, setupComplete } from "./SetupBar";
@@ -98,7 +98,6 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
 
   const turnsUsed = messages.filter((m) => m.role === "user").length;
   const atLimit = turnsUsed >= FE_CHAT_TURN_LIMIT;
-  const remaining = FE_CHAT_TURN_LIMIT - turnsUsed;
 
   const runTurn = useCallback(async (text: string, kickoff: boolean, isRetry = false) => {
     if (streaming || (!kickoff && !text.trim())) return;
@@ -172,7 +171,6 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   const submit = (e: React.FormEvent) => { e.preventDefault(); const t = input.trim(); if (!t || streaming || starting || atLimit) return; setInput(""); void runTurn(t, false); };
   const retry = () => { if (streaming) return; setError(null); const t = lastTurn ?? { text: "", kickoff: true }; void runTurn(t.text, t.kickoff, true); };
   const visible = useMemo(() => runtime.filter((m) => m.role !== "system" || m.phase_divider), [runtime]);
-  const meterCls = atLimit ? "text-red-600 dark:text-red-300" : remaining <= FE_LIMIT_WARN_REMAINING ? "text-amber-600 dark:text-amber-300" : "text-foreground";
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -197,7 +195,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
             );
             if (m.role === "user") return (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] space-y-2 rounded-3xl bg-muted/70 px-4 py-3 text-[15px] leading-relaxed">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
+                <div className="max-w-[85%] space-y-2 rounded-3xl rounded-br-lg bg-gradient-to-br from-muted to-muted/60 px-4 py-3 text-[15px] leading-relaxed shadow-[inset_0_1px_0_hsl(0_0%_100%/0.05)]">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
               </div>
             );
             const { gen, rest } = splitGenLine(m.content);
@@ -226,7 +224,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
               <p className="mt-0.5 text-sm text-muted-foreground">You've used all {FE_CHAT_TURN_LIMIT} messages for this framework. Your framework and teaching plan are saved — start a new project to keep going.</p>
             </div>
           ) : (
-            <form onSubmit={submit} className="flex items-end gap-2 rounded-3xl border border-border bg-card px-4 py-2.5 shadow-[0_8px_24px_-12px_hsl(0_0%_0%/0.6)] focus-within:border-foreground/30">
+            <form onSubmit={submit} className="flex items-end gap-2 rounded-3xl border border-border bg-card px-4 py-2.5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.05),0_12px_32px_-16px_hsl(0_0%_0%/0.8)] transition-[border-color,box-shadow] focus-within:border-primary/40 focus-within:shadow-[inset_0_1px_0_hsl(0_0%_100%/0.05),0_0_0_3px_hsl(var(--primary)/0.12)]">
               <textarea ref={inputRef} value={input} rows={1} disabled={streaming || starting || (!started && !setupComplete(setup))} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(e); } }}
                 placeholder={started ? "Type your answer…" : setupComplete(setup) ? "Answer here to begin, or tap Start above…" : "Pick the voice and audience above to begin"} aria-label="Type a message"
                 className="max-h-[220px] min-h-[28px] flex-1 resize-none bg-transparent py-1 text-[15px] leading-7 placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
@@ -238,10 +236,6 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
               )}
             </form>
           )}
-          <div className="mt-2 flex items-center justify-between px-2 text-[11px] text-muted-foreground">
-            <span className={`tabular-nums ${meterCls}`}>{turnsUsed} / {FE_CHAT_TURN_LIMIT} messages</span>
-            <span className="inline-flex items-center gap-1"><Zap className="h-2.5 w-2.5 text-amber-500" /> {FE_CREDITS_PER_TURN} credits per reply</span>
-          </div>
         </div>
       </div>
     </div>
