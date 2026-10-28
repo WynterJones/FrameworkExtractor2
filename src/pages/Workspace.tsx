@@ -1,7 +1,8 @@
 /**
  * SCREEN: /framework/:id — the two-pane workspace (fixed to the viewport, each
  * pane scrolls internally; a draggable divider resizes the split; the right
- * pane sits on the lighter card surface).
+ * pane sits on the lighter card surface). Under 768px one pane shows at a
+ * time and the header switch is a two-way Chat / Output toggle.
  *
  * Header: editable title (pencil focuses it) · layout switch · autosave chip
  * (Saving… / Saved / Save failed · Retry) · "Download ▾" dropdown (Markdown
@@ -42,6 +43,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 // The shadcn ResizablePanelGroup wrapper does not forward refs; the primitive does.
 import { PanelGroup, type ImperativePanelGroupHandle } from "react-resizable-panels";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -70,6 +72,7 @@ function tabDot(state: FrameworkProjectState, tab: Tab) {
 export default function Workspace() {
   const navigate = useNavigate();
   const { id = "" } = useParams();
+  const isMobile = useIsMobile();
   // The dashboard composer hands over `start` (setup already picked) and, for a template, the first answer.
   const handoff = (useLocation().state ?? {}) as { start?: boolean; firstAnswer?: string };
   const [project, setProject] = useState<FrameworkProject | null>(null);
@@ -149,6 +152,9 @@ export default function Workspace() {
     if (anchorDone && view === "chat" && !viewTouched.current) setView("split");
   }, [anchorDone, view]);
 
+  // A phone shows one pane at a time: "split" reads as chat there.
+  const effectiveView: View = isMobile && view === "split" ? "chat" : view;
+
   // Drive the layout from `view`; the CSS transition on flex-grow animates it.
   useEffect(() => {
     if (loading) return;
@@ -156,9 +162,9 @@ export default function Workspace() {
     const t = window.setTimeout(() => setAnimating(false), 500);
     // One frame later: the panel group applies its default sizes on mount and
     // would overwrite a layout set in the same commit.
-    const raf = requestAnimationFrame(() => panelGroup.current?.setLayout(view === "chat" ? [100, 0] : view === "output" ? [0, 100] : lastSplit.current));
+    const raf = requestAnimationFrame(() => panelGroup.current?.setLayout(effectiveView === "chat" ? [100, 0] : effectiveView === "output" ? [0, 100] : lastSplit.current));
     return () => { window.clearTimeout(t); cancelAnimationFrame(raf); };
-  }, [view, loading]);
+  }, [effectiveView, loading]);
 
   const handleFrameworkChange = (patch: Partial<FrameworkData>) => patchState((s) => ({
     ...s,
@@ -214,26 +220,26 @@ export default function Workspace() {
   const { state } = project;
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
-      <header className="shrink-0 border-b border-border bg-card px-4 py-2.5">
-        <div className="flex items-center gap-3">
+      <header className="shrink-0 border-b border-border bg-card px-3 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 46))} className="w-auto min-w-[8ch] max-w-[46ch] rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
+            <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 46))} className="w-auto min-w-[6ch] max-w-[46ch] truncate rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
             <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
           </div>
           <div className="flex items-center gap-3">
             <div role="group" aria-label="Layout" className="inline-flex rounded-lg border border-border bg-card p-0.5">
-              {([["chat", MessageSquare, "Chat only"], ["split", Columns2, "Chat and output"], ["output", PanelRight, "Output only"]] as const).map(([v, Icon, label]) => (
-                <button key={v} type="button" aria-pressed={view === v} title={label} aria-label={label} onClick={() => { viewTouched.current = true; setView(v); }} className={`grid h-7 w-8 place-items-center rounded-md transition-colors ${view === v ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {([["chat", MessageSquare, "Chat only"], ["split", Columns2, "Chat and output"], ["output", PanelRight, "Output only"]] as const).filter(([v]) => !(isMobile && v === "split")).map(([v, Icon, label]) => (
+                <button key={v} type="button" aria-pressed={effectiveView === v} title={label} aria-label={label} onClick={() => { viewTouched.current = true; setView(v); }} className={`grid h-7 w-8 place-items-center rounded-md transition-colors ${effectiveView === v ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                   <Icon className="h-3.5 w-3.5" />
                 </button>
               ))}
             </div>
             <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-xs ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}>
-              {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> Save failed · <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> Saved</> : null}
+              {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> <span className="hidden sm:inline">Saving…</span></> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> <span className="hidden sm:inline">Save failed ·</span> <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> <span className="hidden sm:inline">Saved</span></> : null}
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8"><Download className="h-3.5 w-3.5" /> Download <ChevronDown className="h-3.5 w-3.5 opacity-60" /></Button>
+                <Button variant="outline" size="sm" className="h-8" aria-label="Download"><Download className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Download</span> <ChevronDown className="hidden h-3.5 w-3.5 opacity-60 sm:block" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={download}><FileText className="h-4 w-4" /> Markdown (.md)</DropdownMenuItem>
@@ -253,10 +259,10 @@ export default function Workspace() {
           </div>
         </section>
         </ResizablePanel>
-        <ResizableHandle withHandle className={`w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary ${view === "split" ? "" : "hidden"}`} />
+        <ResizableHandle withHandle className={`w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary ${effectiveView === "split" ? "" : "hidden"}`} />
         <ResizablePanel defaultSize={0} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
         <section aria-label="Framework output" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card">
-          <header className="flex shrink-0 justify-center border-b border-border px-6 py-3">
+          <header className="flex shrink-0 justify-center border-b border-border px-4 py-2.5 sm:px-6 sm:py-3">
             <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border bg-background/60 p-1">
               {(["framework", "teaching"] as const).map((t) => (
                 <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm transition-colors active:scale-[0.98] ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
@@ -265,7 +271,7 @@ export default function Workspace() {
               ))}
             </div>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
             <div className="mx-auto w-full max-w-[750px]">
               {tab === "framework" ? <FrameworkTab framework={state.framework} onChange={handleFrameworkChange} /> : (
                 <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} />

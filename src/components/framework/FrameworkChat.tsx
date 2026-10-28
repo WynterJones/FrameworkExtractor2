@@ -177,7 +177,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
-        <div className="mx-auto flex w-full max-w-[750px] flex-col gap-6 px-5 py-6">
+        <div className="mx-auto flex w-full max-w-[750px] flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-5 sm:py-6">
           {visible.length === 0 && !streaming && (started ? (
             <p className="text-[15px]"><span className="text-shimmer">Getting your Creative Director ready…</span></p>
           ) : (
@@ -218,7 +218,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
         </div>
       </div>
 
-      <div className="shrink-0 px-5 pb-4 pt-2">
+      <div className="shrink-0 px-3 pb-3 pt-2 sm:px-5 sm:pb-4">
         <div className="mx-auto w-full max-w-[750px]">
           {atLimit ? (
             <div role="status" className="rounded-2xl border border-border bg-destructive/5 px-4 py-3">
