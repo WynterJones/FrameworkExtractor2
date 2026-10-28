@@ -50,6 +50,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { FrameworkChat, type FrameworkChatHandle } from "@/components/framework/FrameworkChat";
 import { FrameworkTab } from "@/components/framework/FrameworkTab";
 import { TeachingPlanTab } from "@/components/framework/TeachingPlanTab";
+import { StatusDot } from "@/components/framework/StatusPill";
 import { buildFrameworkBriefMarkdown, slugify } from "@/lib/framework/brief";
 import { getProject, updateProject } from "@/lib/framework/storage";
 import { applyFeStatePatches, FE_REGENERATE_CREDITS, isInterviewStarted, normalizeTeaching, phase1Complete, reconcileTeachingSteps, type FeStatePatch } from "@/lib/framework/protocol";
@@ -63,10 +64,10 @@ type Tab = "framework" | "teaching";
 type View = "chat" | "split" | "output";
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-function tabDot(state: FrameworkProjectState, tab: Tab) {
+function tabStatus(state: FrameworkProjectState, tab: Tab): "done" | "active" | "pending" {
   const done = tab === "framework" ? phase1Complete(state.framework) : state.teaching.steps.length > 0 && state.teaching.steps.every((s) => (["story", "strategy", "tactics", "case_study"] as const).every((k) => s.components[k] === "done"));
   const active = tab === "framework" ? FRAMEWORK_STAGE_KEYS.some((k) => state.framework.stages[k] === "active") : state.teaching.steps.length > 0;
-  return done ? "bg-emerald-500" : active ? "bg-primary" : "bg-muted-foreground/40";
+  return done ? "done" : active ? "active" : "pending";
 }
 
 export default function Workspace() {
@@ -267,7 +268,7 @@ export default function Workspace() {
             <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border/60 bg-background/40 p-1">
               {(["framework", "teaching"] as const).map((t) => (
                 <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm transition-colors active:scale-[0.98] ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
-                  <span className={`h-2 w-2 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching plan"}
+                  <StatusDot status={tabStatus(state, t)} />{t === "framework" ? "Framework" : "Teaching plan"}
                 </button>
               ))}
             </div>

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, GraduationCap, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { GraduationCap, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditableText } from "./EditableText";
-import { StatusPill, StepNum } from "./StatusPill";
+import { StatusDot, StatusPill, StepNum } from "./StatusPill";
 import { TEACHING_COMPONENT_KEYS, type TeachingComponentKey, type TeachingData, type TeachingStep } from "@/lib/framework/contract";
 
 const META: Record<TeachingComponentKey, { num: number; title: string; sub: string }> = {
@@ -57,7 +57,7 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
           return (
             <li key={n} className="flex-none">
               <button type="button" onClick={() => pick(n)} aria-current={active ? "step" : undefined} title={s.name} className={`flex items-center gap-2 rounded-lg px-3 py-1.5 transition-colors active:scale-[0.98] ${active ? "bg-muted" : "hover:bg-muted/50"}`}>
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums ${done ? "bg-emerald-500 text-white" : active ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>{done ? <Check className="h-3 w-3" strokeWidth={3} /> : n + 1}</span>
+                <StatusDot status={done ? "done" : active ? "active" : "pending"} label={n + 1} />
                 <span className={`whitespace-nowrap text-sm ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>Step {n + 1}</span>
               </button>
             </li>
