@@ -18,11 +18,11 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
       const a = framework.anchor!;
       const set = (patch: Partial<FrameworkAnchor>) => onChange({ anchor: { ...a, ...patch } });
       return (
-        <dl className="grid gap-x-3.5 gap-y-1 text-[13px] sm:grid-cols-[140px_1fr]">
+        <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[150px_1fr]">
           {([["Niche", "niche"], ["Dream customer", "dream_customer"], ["Single result", "single_result"]] as const).map(([label, k]) => (
             <div key={k} className="contents">
-              <dt className="pt-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
-              <dd className="mb-1"><EditableText value={a[k]} ariaLabel={label} placeholder={label} onChange={(v) => set({ [k]: v })} /></dd>
+              <dt className="pt-1.5 text-xs font-medium text-muted-foreground">{label}</dt>
+              <dd><EditableText value={a[k]} ariaLabel={label} placeholder={label} onChange={(v) => set({ [k]: v })} /></dd>
             </div>
           ))}
         </dl>
@@ -30,17 +30,17 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     }
     case "origin":
       return (
-        <blockquote className="rounded-r-lg border-l-[3px] border-primary bg-primary/5 px-3.5 py-3 italic">
+        <blockquote className="border-l-2 border-primary pl-4">
           <EditableText value={framework.origin_story ?? ""} ariaLabel="Origin story" placeholder="The origin story" onChange={(v) => onChange({ origin_story: v })} />
         </blockquote>
       );
     case "hypothesis": {
       const steps = framework.raw_steps ?? [];
       return (
-        <ol className="space-y-1.5">
+        <ol className="space-y-1">
           {steps.map((s, i) => (
-            <li key={i} className="flex items-center gap-2.5 rounded-lg bg-foreground/[0.03] py-1.5 pl-2.5 pr-2">
-              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground tabular-nums">{i + 1}</span>
+            <li key={i} className="flex items-start gap-3">
+              <span className="w-5 shrink-0 pt-[7px] text-right text-xs leading-none tabular-nums text-muted-foreground">{i + 1}.</span>
               <EditableText value={s} ariaLabel={`Step ${i + 1}`} placeholder={`Step ${i + 1}`} onChange={(v) => onChange({ raw_steps: steps.map((x, j) => (j === i ? v : x)) })} />
             </li>
           ))}
@@ -50,13 +50,13 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     case "naming_steps": {
       const named = framework.named_steps ?? [];
       return (
-        <ul className="space-y-1.5">
+        <ul className="space-y-1">
           {named.map((s, i) => (
-            <li key={i} className="flex flex-wrap items-center gap-2.5 rounded-lg bg-foreground/[0.03] px-2.5 py-2 text-[13px]">
-              <span className="text-muted-foreground line-through decoration-muted-foreground/60">{s.from}</span>
-              <span className="font-semibold text-muted-foreground" aria-hidden>→</span>
+            <li key={i} className="grid items-center gap-2 text-sm sm:grid-cols-[1fr_auto_1fr]">
+              <span className="text-muted-foreground">{s.from}</span>
+              <span className="hidden text-muted-foreground sm:inline" aria-hidden>→</span>
               <span className="min-w-0 flex-1">
-                <EditableText value={s.to} ariaLabel={`Name for step ${i + 1}`} placeholder="Step name" className="font-bold text-primary" onChange={(v) => onChange({ named_steps: named.map((x, j) => (j === i ? { ...x, to: v } : x)) })} />
+                <EditableText value={s.to} ariaLabel={`Name for step ${i + 1}`} placeholder="Step name" className="font-semibold" onChange={(v) => onChange({ named_steps: named.map((x, j) => (j === i ? { ...x, to: v } : x)) })} />
               </span>
             </li>
           ))}
@@ -65,10 +65,9 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     }
     case "naming_framework":
       return (
-        <div className="mt-1 rounded-xl bg-primary px-4 py-4 text-center text-primary-foreground">
-          <span className="block text-[10px] font-bold uppercase tracking-[0.1em] opacity-85">Framework name</span>
-          <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="mt-1 text-center text-[22px] font-extrabold leading-tight tracking-tight text-primary-foreground hover:bg-white/15 focus:bg-white/20 placeholder:text-primary-foreground/60" onChange={(v) => onChange({ framework_name: v })} />
-          <EditableText value={framework.framework_tagline ?? ""} ariaLabel="Framework tagline" placeholder="Add a one-line tagline (optional)" className="text-center text-xs text-primary-foreground/90 hover:bg-white/15 focus:bg-white/20 placeholder:text-primary-foreground/60" onChange={(v) => onChange({ framework_tagline: v })} />
+        <div className="rounded-2xl bg-primary px-5 py-5 text-center text-primary-foreground">
+          <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="text-center font-display text-2xl font-bold leading-tight tracking-tight text-primary-foreground hover:bg-white/15 focus:bg-white/20 placeholder:text-primary-foreground/60" onChange={(v) => onChange({ framework_name: v })} />
+          <EditableText value={framework.framework_tagline ?? ""} ariaLabel="Framework tagline" placeholder="Add a one-line tagline (optional)" className="text-center text-sm text-primary-foreground/85 hover:bg-white/15 focus:bg-white/20 placeholder:text-primary-foreground/60" onChange={(v) => onChange({ framework_tagline: v })} />
         </div>
       );
   }
@@ -76,41 +75,35 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
 
 export function FrameworkTab({ framework, onChange }: { framework: FrameworkData; onChange: (p: Partial<FrameworkData>) => void }) {
   const empty = FRAMEWORK_STAGE_KEYS.every((k) => !frameworkStageHasData(k, framework));
-  return (
-    <>
-      <div className="mb-3.5">
-        <h3 className="text-[17px] font-bold tracking-tight">Extracting the framework</h3>
-        <p className="mt-1 text-[12.5px] text-muted-foreground">Five stages walked through with the Creative Director. Each one produces a piece of the final framework{empty ? "." : " — tap any field to edit it."}</p>
+  if (empty) {
+    return (
+      <div className="flex flex-col items-center gap-2 px-6 py-20 text-center">
+        <Compass className="h-6 w-6 text-muted-foreground" />
+        <h4 className="text-[15px] font-semibold">Nothing extracted yet</h4>
+        <p className="max-w-[36ch] text-sm text-muted-foreground">Answer the questions on the left and your framework fills in here, one stage at a time.</p>
       </div>
-      {empty ? (
-        <div className="flex flex-col items-center gap-2 px-6 py-12 text-center text-muted-foreground">
-          <span className="grid h-12 w-12 place-items-center rounded-xl border border-border bg-foreground/5"><Compass className="h-5 w-5" /></span>
-          <h4 className="text-sm font-bold text-foreground">Nothing extracted yet</h4>
-          <p className="max-w-[34ch] text-[12.5px]">Answer the questions on the left and your framework fills in here.</p>
-        </div>
-      ) : (
-        <ol className="space-y-3">
-          {FRAMEWORK_STAGE_KEYS.map((key) => {
-            const meta = STAGE_META[key];
-            const status = framework.stages[key];
-            const has = frameworkStageHasData(key, framework);
-            return (
-              <li key={key} className={`rounded-xl border bg-card p-3.5 transition-colors ${status === "active" ? "border-primary/40" : "border-border"} ${status === "pending" ? "opacity-60" : ""} ${key === "naming_framework" && has ? "border-primary/40 bg-primary/5" : ""}`}>
-                <header className="mb-1.5 flex flex-wrap items-center gap-2.5">
-                  <StepNum n={meta.num} />
-                  <h4 className="min-w-0 flex-1 text-sm font-bold">{meta.title}</h4>
-                  <StatusPill status={status} />
-                </header>
-                <p className="mb-2.5 text-[12.5px] leading-snug text-muted-foreground">{meta.sub}</p>
-                {has ? <StageBody stageKey={key} framework={framework} onChange={onChange} /> : (
-                  <p className="text-[12.5px] italic text-muted-foreground">{status === "active" ? "Filling in from the conversation on the left…" : "Locks once the previous stage is complete."}</p>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      )}
-    </>
+    );
+  }
+  return (
+    <ol className="divide-y divide-border">
+      {FRAMEWORK_STAGE_KEYS.map((key) => {
+        const meta = STAGE_META[key];
+        const status = framework.stages[key];
+        const has = frameworkStageHasData(key, framework);
+        return (
+          <li key={key} className={`py-6 first:pt-2 ${status === "pending" ? "opacity-50" : ""}`}>
+            <header className="mb-3 flex items-center gap-3">
+              <StepNum n={meta.num} />
+              <h4 className="flex-1 text-[15px] font-semibold">{meta.title}</h4>
+              <StatusPill status={status} />
+            </header>
+            {has ? <StageBody stageKey={key} framework={framework} onChange={onChange} /> : (
+              <p className="text-sm text-muted-foreground">{status === "active" ? "Filling in from the conversation…" : meta.sub}</p>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 export default FrameworkTab;

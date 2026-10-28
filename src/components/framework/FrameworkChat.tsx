@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Check, Compass, RefreshCw, Send, Sparkles, Square, Zap } from "lucide-react";
+import { Check, RefreshCw, Send, Sparkles, Square, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "./Markdown";
 import { fakeStream } from "@/lib/mock/ai";
@@ -41,16 +41,13 @@ function splitGenLine(content: string) {
 
 function GenCard({ generating, label }: { generating: boolean; label: string }) {
   return (
-    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${generating ? "border-primary/30 bg-primary/5" : "border-emerald-500/40 bg-emerald-500/[0.07]"}`}>
-      <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-md text-white ${generating ? "animate-pulse bg-primary" : "bg-emerald-600"}`}>
-        {generating ? <Sparkles className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-      </span>
-      <div className="flex min-w-0 flex-col"><strong className="text-[12.5px] font-bold">{label}</strong><span className="text-[11.5px] text-muted-foreground">{generating ? "The Creative Director is working" : "Added to your teaching plan"}</span></div>
+    <div className="inline-flex items-center gap-2.5 rounded-full border border-border px-3.5 py-1.5 text-sm">
+      {generating ? <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" /> : <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} />}
+      <span className="font-medium">{label}</span>
+      <span className="text-muted-foreground">{generating ? "working…" : "added to the plan"}</span>
     </div>
   );
 }
-
-const Avatar = () => <span className="mt-0.5 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full bg-primary text-primary-foreground" aria-hidden><Sparkles className="h-3.5 w-3.5" /></span>;
 
 export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>(function FrameworkChat(
   { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart }, ref,
@@ -160,77 +157,72 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div ref={scrollRef} role="log" aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
-        {visible.length === 0 && !streaming && (started ? (
-          <div className="flex max-w-[92%] gap-2.5"><Avatar /><div className="rounded-xl rounded-tl border border-border bg-foreground/5 px-3.5 py-2.5 text-[13.5px]">Getting your Creative Director ready…</div></div>
-        ) : (
-          <div className="flex flex-wrap items-start gap-3 rounded-xl border border-border bg-card p-3.5">
-            <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Compass className="h-5 w-5" /></span>
-            <div className="min-w-0 flex-1 basis-[220px]">
-              <strong className="text-[13.5px] font-bold">Set the voice and audience, then start</strong>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">The Creative Director pulls your framework out in the voice of one Attractive Character, for one Customer Avatar. Pick all three above so the interview sounds like you.</p>
+      <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
+        <div className="mx-auto flex w-full max-w-[750px] flex-col gap-6 px-5 py-6">
+          {visible.length === 0 && !streaming && (started ? (
+            <p className="text-[15px] text-muted-foreground">Getting your Creative Director ready…</p>
+          ) : (
+            <div className="rounded-2xl border border-border p-5">
+              <strong className="text-[15px] font-semibold">Set the voice and audience, then start</strong>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">The Creative Director pulls your framework out in the voice of one Attractive Character, for one Customer Avatar. Pick all three above so the interview sounds like you.</p>
+              <Button className="mt-4 active:scale-[0.96] transition-transform duration-150" disabled={starting} onClick={() => { if (!streaming && !starting && !atLimit) void runTurn("", true); }}>{starting ? "Starting…" : "Start building your framework"}</Button>
             </div>
-            <Button size="sm" className="active:scale-[0.96] transition-transform duration-150" disabled={starting} onClick={() => { if (!streaming && !starting && !atLimit) void runTurn("", true); }}>{starting ? "Starting…" : "Start building your framework"}</Button>
-          </div>
-        ))}
-        {visible.map((m) => {
-          if (m.phase_divider) return (
-            <div key={m.id} className="flex items-start gap-2.5 rounded-xl border border-dashed border-primary/35 bg-gradient-to-r from-emerald-500/10 to-primary/10 px-3.5 py-2.5">
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" strokeWidth={3} /></span>
-              <div><strong className="block text-xs font-bold">Framework locked</strong><p className="mt-0.5 text-xs text-muted-foreground">Switching to <strong>Phase 2 — teaching plan</strong>. We'll design how you'll teach each step.</p></div>
-            </div>
-          );
-          if (m.role === "user") return (
-            <div key={m.id} className="flex max-w-[92%] flex-row-reverse gap-2.5 self-end">
-              <div className="space-y-2 rounded-xl rounded-tr border border-primary/25 bg-primary/10 px-3.5 py-2.5 text-[13.5px] leading-relaxed">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
-            </div>
-          );
-          const { gen, rest } = splitGenLine(m.content);
-          if (m.streaming && (!m.content.trim() || gen)) return <div key={m.id} className="flex max-w-[92%] gap-2.5"><Avatar /><GenCard generating label="Generating…" /></div>;
-          return (
-            <div key={m.id} className="flex max-w-[92%] gap-2.5"><Avatar />
-              <div className="flex min-w-0 max-w-[86%] flex-col items-start gap-2">
-                {gen && <GenCard generating={false} label={gen} />}
-                {rest && <div className="rounded-xl rounded-tl border border-border bg-foreground/5 px-3.5 py-2.5"><Markdown text={rest} /></div>}
+          ))}
+          {visible.map((m) => {
+            if (m.phase_divider) return (
+              <div key={m.id} className="flex items-center gap-3 py-1 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border" /><Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} /><span><strong className="font-semibold text-foreground">Framework locked</strong> · Phase 2, the teaching plan</span><span className="h-px flex-1 bg-border" />
               </div>
-            </div>
-          );
-        })}
-        {error && (
-          <div role="alert" className="flex max-w-[92%] gap-2.5"><Avatar />
-            <div className="rounded-xl rounded-tl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-[13.5px]">
+            );
+            if (m.role === "user") return (
+              <div key={m.id} className="flex justify-end">
+                <div className="max-w-[85%] space-y-2 rounded-3xl bg-muted px-4 py-2.5 text-[15px] leading-relaxed">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
+              </div>
+            );
+            const { gen, rest } = splitGenLine(m.content);
+            if (m.streaming && (!m.content.trim() || gen)) return <GenCard key={m.id} generating label="Generating…" />;
+            return (
+              <div key={m.id} className="space-y-3">
+                {gen && <GenCard generating={false} label={gen} />}
+                {rest && <div className="text-[15px] leading-7 [&_p]:text-[15px] [&_p]:leading-7 [&_ul]:text-[15px] [&_ol]:text-[15px]"><Markdown text={rest} /></div>}
+              </div>
+            );
+          })}
+          {error && (
+            <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
               <p>{error}</p>
               <Button variant="outline" size="sm" className="mt-2 h-7" onClick={retry} disabled={streaming}><RefreshCw className="h-3 w-3" /> Try again</Button>
             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="shrink-0 space-y-1.5 border-t border-border bg-card px-3 py-2">
-        <div className="flex items-center justify-between gap-2.5">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">Conversation <span className={`font-bold tabular-nums ${meterCls}`}>{turnsUsed} / {FE_CHAT_TURN_LIMIT} messages</span></span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-foreground/[0.04] px-2 py-0.5 text-[10px] font-bold text-muted-foreground"><Zap className="h-2.5 w-2.5 text-amber-500" /> {FE_CREDITS_PER_TURN} credits / reply</span>
-        </div>
-        <div className="h-[5px] overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full transition-all ${atLimit ? "bg-red-500" : remaining <= FE_LIMIT_WARN_REMAINING ? "bg-amber-500" : "bg-gradient-to-r from-emerald-500 to-primary"}`} style={{ width: `${Math.min(100, (turnsUsed / FE_CHAT_TURN_LIMIT) * 100)}%` }} /></div>
-      </div>
-
-      {atLimit ? (
-        <div role="status" className="flex items-start gap-2.5 border-t border-border bg-destructive/5 px-3.5 py-3">
-          <Square className="mt-0.5 h-4 w-4 shrink-0 fill-current text-red-600 dark:text-red-300" strokeWidth={0} />
-          <div><strong className="block text-[12.5px] font-bold">Message limit reached</strong><p className="mt-0.5 text-xs text-muted-foreground">You've used all {FE_CHAT_TURN_LIMIT} messages for this framework. Your framework and teaching plan are saved — start a new project to keep going.</p></div>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="flex items-stretch gap-2 border-t border-border px-3 py-2.5">
-          <textarea ref={inputRef} value={input} rows={2} disabled={streaming || starting} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(e); } }}
-            placeholder={started ? "Type your answer… (Enter to send, Shift+Enter for newline)" : "Answer here to begin, or tap Start above…"} aria-label="Type a message"
-            className="flex-1 resize-none rounded-lg border border-border bg-card px-3 py-2 text-[13px] leading-snug focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60" />
-          {streaming ? (
-            <Button type="button" size="icon" className="h-auto w-10 active:scale-[0.96]" onClick={() => { if (abortRef.current) abortRef.current.aborted = true; }} aria-label="Stop generating"><Square className="h-3.5 w-3.5 fill-current" strokeWidth={0} /></Button>
-          ) : (
-            <Button type="submit" size="icon" className="h-auto w-10 active:scale-[0.96]" disabled={!input.trim()} aria-label="Send message"><Send className="h-4 w-4" /></Button>
           )}
-        </form>
-      )}
+        </div>
+      </div>
+
+      <div className="shrink-0 px-5 pb-4 pt-2">
+        <div className="mx-auto w-full max-w-[750px]">
+          {atLimit ? (
+            <div role="status" className="rounded-2xl border border-border bg-destructive/5 px-4 py-3">
+              <strong className="block text-sm font-semibold">Message limit reached</strong>
+              <p className="mt-0.5 text-sm text-muted-foreground">You've used all {FE_CHAT_TURN_LIMIT} messages for this framework. Your framework and teaching plan are saved — start a new project to keep going.</p>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="flex items-end gap-2 rounded-3xl border border-border bg-card px-4 py-2.5 shadow-sm focus-within:border-foreground/30">
+              <textarea ref={inputRef} value={input} rows={1} disabled={streaming || starting} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(e); } }}
+                placeholder={started ? "Type your answer…" : "Answer here to begin, or tap Start above…"} aria-label="Type a message"
+                className="max-h-[220px] min-h-[28px] flex-1 resize-none bg-transparent py-1 text-[15px] leading-7 placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+                onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 220)}px`; }} />
+              {streaming ? (
+                <Button type="button" size="icon" className="h-8 w-8 shrink-0 rounded-full active:scale-[0.96]" onClick={() => { if (abortRef.current) abortRef.current.aborted = true; }} aria-label="Stop generating"><Square className="h-3 w-3 fill-current" strokeWidth={0} /></Button>
+              ) : (
+                <Button type="submit" size="icon" className="h-8 w-8 shrink-0 rounded-full active:scale-[0.96]" disabled={!input.trim()} aria-label="Send message"><Send className="h-3.5 w-3.5" /></Button>
+              )}
+            </form>
+          )}
+          <div className="mt-2 flex items-center justify-between px-2 text-[11px] text-muted-foreground">
+            <span className={`tabular-nums ${meterCls}`}>{turnsUsed} / {FE_CHAT_TURN_LIMIT} messages</span>
+            <span className="inline-flex items-center gap-1"><Zap className="h-2.5 w-2.5 text-amber-500" /> {FE_CREDITS_PER_TURN} credits per reply</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 });

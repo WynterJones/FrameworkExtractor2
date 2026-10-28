@@ -23,7 +23,7 @@ export function EditableText({ value, onChange, placeholder, ariaLabel, autoFocu
       spellCheck
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "block w-full resize-none overflow-hidden rounded-md border border-transparent bg-transparent px-2 py-1 text-[13px] leading-relaxed text-foreground transition-colors",
+        "block w-full resize-none overflow-hidden rounded-md border border-transparent bg-transparent px-2 py-1 text-sm leading-relaxed text-foreground transition-colors",
         "hover:bg-foreground/5 focus:border-border focus:bg-foreground/[0.07] focus:outline-none placeholder:text-muted-foreground/60",
         className,
       )}

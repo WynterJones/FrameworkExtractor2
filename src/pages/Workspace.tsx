@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Download, FileText, Library, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Save, Sparkles, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Download, Library, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Save, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -22,7 +22,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 function tabDot(state: FrameworkProjectState, tab: Tab) {
   const done = tab === "framework" ? phase1Complete(state.framework) : state.teaching.steps.length > 0 && state.teaching.steps.every((s) => (["story", "strategy", "tactics", "case_study"] as const).every((k) => s.components[k] === "done"));
   const active = tab === "framework" ? FRAMEWORK_STAGE_KEYS.some((k) => state.framework.stages[k] === "active") : state.teaching.steps.length > 0;
-  return done ? "bg-emerald-600" : active ? "bg-primary ring-2 ring-primary/35 animate-pulse" : "border border-border bg-muted";
+  return done ? "bg-emerald-500" : active ? "bg-primary" : "bg-muted-foreground/40";
 }
 
 export default function Workspace() {
@@ -174,9 +174,9 @@ export default function Workspace() {
 
       <div className={`grid min-h-0 flex-1 items-stretch ${outputExpanded ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
         <section aria-label="Creative Director chat" className={`flex min-h-0 max-h-[72vh] flex-col border-b border-border lg:max-h-none lg:border-b-0 lg:border-r ${outputExpanded ? "hidden" : ""}`}>
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-border bg-background/40 px-4 py-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-red-500/15 text-red-500"><Sparkles className="h-4 w-4" /></span>
-            <div><h2 className="text-sm font-bold">Creative Director</h2><p className="text-xs text-muted-foreground">{state.phase === 2 ? "Phase 2 · Designing the teaching plan" : "Phase 1 · Extracting your framework"}</p></div>
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-3">
+            <h2 className="text-sm font-semibold">Creative Director</h2>
+            <p className="text-xs text-muted-foreground">{state.phase === 2 ? "Phase 2 · Designing the teaching plan" : "Phase 1 · Extracting your framework"}</p>
           </header>
           <SetupBar setup={project.setup} onChange={patchSetup} />
           <div className="flex min-h-0 flex-1 flex-col">
@@ -186,32 +186,28 @@ export default function Workspace() {
         </section>
 
         <section aria-label="Framework output" className="flex min-h-0 flex-col">
-          <header className="grid shrink-0 grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border bg-background/40 px-4 py-3">
-            <div className="col-span-2 flex items-center gap-2.5">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 text-emerald-500"><FileText className="h-4 w-4" /></span>
-              <div><h2 className="text-sm font-bold">Output</h2><p className="text-xs text-muted-foreground">Flip between the framework and the teaching plan.</p></div>
-            </div>
-            <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border bg-foreground/[0.04] p-1">
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-2">
+            <div role="tablist" className="flex gap-1">
               {(["framework", "teaching"] as const).map((t) => (
-                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-lg border px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${tab === t ? "border-border bg-card text-foreground shadow-sm" : "border-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground"}`}>
-                  <span className={`h-3.5 w-3.5 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching Plan"}
+                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  <span className={`h-2 w-2 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching plan"}
                 </button>
               ))}
             </div>
-            <Button variant="outline" size="icon" className="h-8 w-8 justify-self-end" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
               {outputExpanded ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
             </Button>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <div className={outputExpanded ? "mx-auto w-full max-w-[900px]" : ""}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="mx-auto w-full max-w-[750px]">
               {tab === "framework" ? <FrameworkTab framework={state.framework} onChange={handleFrameworkChange} /> : (
                 <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} />
               )}
             </div>
           </div>
-          <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-background/40 px-3.5 py-3">
-            <Button variant="outline" size="sm" className="h-8" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate</Button>
-            <span className="text-[11px] font-semibold text-muted-foreground tabular-nums">{FE_REGENERATE_CREDITS} credits</span>
+          <footer className="flex shrink-0 items-center gap-3 border-t border-border px-5 py-2.5 pr-24">
+            <span className="text-[11px] text-muted-foreground tabular-nums">{FE_REGENERATE_CREDITS} credits</span>
+            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate</Button>
           </footer>
         </section>
       </div>

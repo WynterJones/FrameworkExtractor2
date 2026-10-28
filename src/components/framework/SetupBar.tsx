@@ -8,16 +8,16 @@ export function SetupBar({ setup, onChange, disabled }: { setup: FrameworkSetup;
   const voices = VOICES.filter((v) => v.character_id === setup.character_id);
   const Field = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
     <label className="flex min-w-0 flex-1 items-center gap-2">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground">{icon}</span>
+      <span className="shrink-0 text-muted-foreground">{icon}</span>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-[11px] text-muted-foreground">{label}</span>
         {children}
       </span>
     </label>
   );
-  const trigger = "h-7 border-0 bg-transparent px-0 text-[13px] font-semibold shadow-none focus:ring-0 [&>span]:truncate";
+  const trigger = "h-6 border-0 bg-transparent px-0 text-sm font-medium shadow-none focus:ring-0 [&>span]:truncate";
   return (
-    <div className="flex flex-col gap-3 border-b border-border bg-foreground/[0.025] px-5 py-2 sm:flex-row sm:items-center sm:gap-5">
+    <div className="border-b border-border px-5 py-2"><div className="mx-auto flex w-full max-w-[750px] flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
       <Field icon={<User className="h-3.5 w-3.5" />} label="Attractive Character">
         <Select value={setup.character_id ?? ""} disabled={disabled} onValueChange={(v) => onChange({ character_id: v, voice_id: null })}>
           <SelectTrigger className={trigger}><SelectValue placeholder="Not set" /></SelectTrigger>
@@ -36,7 +36,7 @@ export function SetupBar({ setup, onChange, disabled }: { setup: FrameworkSetup;
           <SelectContent>{AVATARS.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
         </Select>
       </Field>
-    </div>
+    </div></div>
   );
 }
 export default SetupBar;
