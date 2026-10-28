@@ -180,7 +180,7 @@ export default function Workspace() {
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm" className="h-8"><Link to="/"><ArrowLeft className="h-3.5 w-3.5" /> Back</Link></Button>
           <div className="ml-1 flex min-w-0 flex-1 items-center gap-1 border-l border-border pl-3">
-            <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" className="min-w-[8ch] max-w-[46ch] flex-1 rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
+            <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 46))} className="w-auto min-w-[8ch] max-w-[46ch] rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
             <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
           </div>
           <div className="flex items-center gap-3">
