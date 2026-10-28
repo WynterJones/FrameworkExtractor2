@@ -2,8 +2,13 @@
  * SCREEN: / — Project list.
  *
  * Header: brand mark "Framework Extractor" (compass icon) left, avatar "J"
- * right, no nav. Footer: brand + tagline on the left, copyright on the right;
- * no links to pages that do not exist. Hero card (centred text, no image): h1
+ * right, no nav. Hero (centred, primary glow): eyebrow pill "Your method,
+ * named and teachable", h1 "Pull the framework out of your head.", one
+ * paragraph, a large primary CTA "Start a new framework →" (creates a
+ * project and opens it), small note "About 45 minutes. No prep, just answer
+ * the questions." Then "Your frameworks N" + a search input, then the list.
+ * Footer: brand + tagline on the left, copyright on the right; no links to
+ * pages that do not exist. Hero card (centred text, no image): h1
  * "Framework Extractor", the pitch paragraph, a pill "N frameworks". Controls row:
  * primary "New Framework" button (plus icon, "Creating…" while busy) and a search
  * input ("Search frameworks…"). Then one row per framework_project: title,
@@ -22,7 +27,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Boxes, Compass, Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowRight, Boxes, Compass, Loader2, Search, Sparkles, Trash2 } from "lucide-react";
 import AppBrand from "@/components/AppBrand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,30 +84,34 @@ export default function Index() {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8">
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-background px-6 py-10 text-center sm:py-14">
-          <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-3xl" aria-hidden />
-          <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-4">
-            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Framework Extractor</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground sm:text-[15px]">You're already the expert — you just haven't packaged it yet. The Extractor interviews you on how you actually think, work and win, then turns the pattern into a step-by-step framework you can teach, sell or scale.</p>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground"><span className="font-semibold text-foreground tabular-nums">{projects.length}</span>{projects.length === 1 ? "framework" : "frameworks"}</span>
+        <section className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-b from-card to-background px-6 py-14 text-center sm:py-20">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-80 w-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl" aria-hidden />
+          <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5" /> Your method, named and teachable</span>
+            <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">Pull the framework out of your head.</h1>
+            <p className="max-w-xl text-base text-muted-foreground sm:text-lg">A Creative Director interviews you on how you actually think, work and win, then turns the pattern into a step-by-step framework you can teach, sell or scale.</p>
+            <Button size="lg" className="mt-2 h-12 px-7 text-base active:scale-[0.98] transition-transform duration-150" onClick={() => void create()} disabled={creating}>
+              {creating ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating…</> : <>Start a new framework <ArrowRight className="h-4 w-4" /></>}
+            </Button>
+            <p className="text-xs text-muted-foreground">About 45 minutes. No prep, just answer the questions.</p>
           </div>
-        </div>
+        </section>
 
-        <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-center">
-          <Button onClick={() => void create()} disabled={creating} className="active:scale-[0.96] transition-transform duration-150">{creating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Creating…</> : <><Plus className="h-3.5 w-3.5" /> New Framework</>}</Button>
-          <label className="relative flex-1">
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-display text-lg font-semibold">Your frameworks <span className="ml-1 text-sm font-normal text-muted-foreground tabular-nums">{projects.length}</span></h2>
+          <label className="relative sm:w-80">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search frameworks…" aria-label="Search frameworks" className="pl-9" />
           </label>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-4">
           {loading ? (
-            <p role="status" aria-live="polite" className="my-6 inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading your frameworks…</p>
+            <div role="status" aria-live="polite" className="flex flex-col items-center gap-3 py-16 text-muted-foreground"><Loader2 className="h-7 w-7 animate-spin text-primary" /><span className="text-sm">Loading your frameworks…</span></div>
           ) : error ? (
             <div role="alert"><Empty title="Something went wrong" body={error} cta={<Button variant="outline" onClick={() => void load()}>Try again</Button>} /></div>
           ) : projects.length === 0 ? (
-            <Empty title="Pull your first framework out of your head" body="Start a project and the Extractor will interview you, then map your thinking into a framework you can teach and sell." cta={<Button onClick={() => void create()} disabled={creating}>{creating ? "Creating…" : "New Framework"}</Button>} />
+            <Empty title="No frameworks yet" body="Start one above and the Creative Director will interview you, then map your thinking into a framework you can teach and sell." />
           ) : filtered.length === 0 ? (
             <Empty title={`No frameworks match “${search.trim()}”`} body="Try a different search." />
           ) : (

@@ -164,7 +164,7 @@ export default function Workspace() {
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
   };
 
-  if (loading) return <p role="status" className="m-7 inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading project…</p>;
+  if (loading) return <div role="status" className="fixed inset-0 flex flex-col items-center justify-center gap-4 bg-background text-muted-foreground"><Loader2 className="h-9 w-9 animate-spin text-primary" /><span className="text-base">Loading project…</span></div>;
   if (!project) return (
     <div role="alert" className="m-7 flex flex-col items-center rounded-xl border border-dashed border-border px-6 py-14 text-center">
       <h3 className="text-base font-bold">We couldn't open this framework</h3>
