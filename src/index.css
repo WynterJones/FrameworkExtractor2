@@ -228,6 +228,10 @@ All colors MUST be HSL.
     0% { background-position: 120% 0; }
     100% { background-position: -120% 0; }
   }
+  /* Workspace panes: animate the collapse / expand that the layout switch drives. */
+  .panel-animate {
+    transition: flex-grow 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
   .text-gradient {
     background-clip: text;
     -webkit-background-clip: text;

@@ -6,12 +6,25 @@ export function EditableText({ value, onChange, placeholder, ariaLabel, autoFocu
   value: string; onChange: (v: string) => void; placeholder?: string; ariaLabel?: string; autoFocus?: boolean; className?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
+  const fit = () => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
+  };
+  useEffect(fit, [value]);
+  // Re-measure when the column width changes (a pane opening from 0px, a drag
+  // on the divider): a height measured at a narrow width is wildly too tall.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let lastWidth = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== lastWidth) { lastWidth = el.clientWidth; fit(); }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
     <textarea
       ref={ref}

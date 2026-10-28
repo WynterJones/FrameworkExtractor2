@@ -36,9 +36,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Check, ChevronDown, Download, FileText, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, Columns2, Download, FileText, Loader2, MessageSquare, PanelRight, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import type { ImperativePanelHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -55,6 +56,7 @@ import { REGENERATE_SHELL } from "@/lib/framework/prompts";
 import { DEFAULT_FRAMEWORK_TITLE, FRAMEWORK_STAGE_KEYS, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
 
 type Tab = "framework" | "teaching";
+type View = "chat" | "split" | "output";
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 function tabDot(state: FrameworkProjectState, tab: Tab) {
@@ -71,7 +73,12 @@ export default function Workspace() {
   const [tab, setTab] = useState<Tab>("framework");
   const tabTouched = useRef(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [outputExpanded, setOutputExpanded] = useState(false);
+  // chat-only until the first framework stage locks, then the output pane animates open.
+  const [view, setView] = useState<View>("chat");
+  const viewTouched = useRef(false);
+  const chatPanel = useRef<ImperativePanelHandle>(null);
+  const outputPanel = useRef<ImperativePanelHandle>(null);
+  const [animating, setAnimating] = useState(false);
   const [started, setStarted] = useState(false);
   const [chatStreaming, setChatStreaming] = useState(false);
   const [autoFillStep, setAutoFillStep] = useState<number | null>(null);
@@ -86,7 +93,11 @@ export default function Workspace() {
     (async () => {
       const p = await getProject(id);
       if (cancelled) return;
-      if (p) { setProject(p); setStarted(isInterviewStarted(p.state.chat_messages)); if (!tabTouched.current) setTab(p.state.phase === 2 ? "teaching" : "framework"); }
+      if (p) {
+        setProject(p); setStarted(isInterviewStarted(p.state.chat_messages));
+        if (!tabTouched.current) setTab(p.state.phase === 2 ? "teaching" : "framework");
+        if (p.state.framework.stages.anchor === "done") setView("split");
+      }
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -127,6 +138,22 @@ export default function Workspace() {
     patchState((s) => applyFeStatePatches(s, patches));
     if (patches.some((p) => p.phase === 2)) { tabTouched.current = true; setTab("teaching"); }
   }, [patchState]);
+
+  // Open the output pane the first time something lands in the framework.
+  const anchorDone = project?.state.framework.stages.anchor === "done";
+  useEffect(() => {
+    if (anchorDone && view === "chat" && !viewTouched.current) setView("split");
+  }, [anchorDone, view]);
+
+  // Drive the two panels from `view`; the CSS transition on flex-grow animates it.
+  useEffect(() => {
+    setAnimating(true);
+    const t = window.setTimeout(() => setAnimating(false), 500);
+    if (view === "chat") { outputPanel.current?.collapse(); chatPanel.current?.expand(); }
+    else if (view === "output") { chatPanel.current?.collapse(); outputPanel.current?.expand(); }
+    else { chatPanel.current?.expand(); outputPanel.current?.expand(); if (chatPanel.current && (chatPanel.current.getSize() < 30 || chatPanel.current.getSize() > 70)) chatPanel.current.resize(50); }
+    return () => window.clearTimeout(t);
+  }, [view]);
 
   const handleFrameworkChange = (patch: Partial<FrameworkData>) => patchState((s) => ({
     ...s,
@@ -184,6 +211,13 @@ export default function Workspace() {
             <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
           </div>
           <div className="flex items-center gap-3">
+            <div role="group" aria-label="Layout" className="inline-flex rounded-lg border border-border bg-card p-0.5">
+              {([["chat", MessageSquare, "Chat only"], ["split", Columns2, "Chat and output"], ["output", PanelRight, "Output only"]] as const).map(([v, Icon, label]) => (
+                <button key={v} type="button" aria-pressed={view === v} title={label} aria-label={label} onClick={() => { viewTouched.current = true; setView(v); }} className={`grid h-7 w-8 place-items-center rounded-md transition-colors ${view === v ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
+            </div>
             <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-xs ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}>
               {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> Save failed · <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> Saved</> : null}
             </span>
@@ -200,36 +234,27 @@ export default function Workspace() {
         </div>
       </header>
 
-      <ResizablePanelGroup direction="horizontal" autoSaveId="fe-workspace" className="min-h-0 flex-1">
-        {!outputExpanded && (
-          <>
-            <ResizablePanel defaultSize={50} minSize={30}>
-        <section aria-label="Creative Director chat" className="flex h-full min-h-0 flex-col">
+      <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
+        <ResizablePanel ref={chatPanel} defaultSize={100} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
+        <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
           <SetupBar setup={project.setup} onChange={patchSetup} />
           <div className="flex min-h-0 flex-1 flex-col">
             <FrameworkChat ref={chatRef} state={state} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
               onMessagesChange={(next) => patchState((s) => ({ ...s, chat_messages: next }))} onStatePatch={handleStatePatch} onStreamingChange={handleStreamingChange} />
           </div>
         </section>
-
-            </ResizablePanel>
-            <ResizableHandle withHandle className="w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary" />
-          </>
-        )}
-        <ResizablePanel defaultSize={50} minSize={30}>
-        <section aria-label="Framework output" className="flex h-full min-h-0 flex-col bg-card">
-          <header className="relative flex shrink-0 items-stretch justify-center gap-3 border-b border-border px-6">
-            <div role="tablist" className="flex gap-8">
+        </ResizablePanel>
+        <ResizableHandle withHandle className={`w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary ${view === "split" ? "" : "hidden"}`} />
+        <ResizablePanel ref={outputPanel} defaultSize={0} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
+        <section aria-label="Framework output" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card">
+          <header className="flex shrink-0 justify-center border-b border-border px-6 py-3">
+            <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border bg-background/60 p-1">
               {(["framework", "teaching"] as const).map((t) => (
-                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`relative inline-flex items-center gap-2 py-3.5 text-sm transition-colors ${tab === t ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm transition-colors active:scale-[0.98] ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
                   <span className={`h-2 w-2 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching plan"}
-                  <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full transition-colors ${tab === t ? "bg-primary" : "bg-transparent"}`} aria-hidden />
                 </button>
               ))}
             </div>
-            <Button variant="ghost" size="icon" className="absolute right-3 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
-              {outputExpanded ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </Button>
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
             <div className="mx-auto w-full max-w-[750px]">

@@ -3,7 +3,9 @@ import type { StageStatus } from "@/lib/framework/contract";
 
 const LABEL: Record<StageStatus, string> = { done: "Done", active: "In progress", pending: "Up next" };
 
+/** Done needs no badge: the content itself is the proof. Only the two waiting states get one. */
 export function StatusPill({ status, pendingLabel }: { status: StageStatus; pendingLabel?: string }) {
+  if (status === "done") return null;
   const cls =
     status === "done" ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-inset ring-emerald-500/30"
     : status === "active" ? "bg-primary/15 text-primary ring-1 ring-inset ring-primary/30"
