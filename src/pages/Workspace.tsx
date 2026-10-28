@@ -39,8 +39,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Columns2, Download, FileText, Loader2, MessageSquare, PanelRight, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import type { ImperativePanelHandle } from "react-resizable-panels";
+import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
+// The shadcn ResizablePanelGroup wrapper does not forward refs; the primitive does.
+import { PanelGroup, type ImperativePanelGroupHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -76,8 +77,8 @@ export default function Workspace() {
   // chat-only until the first framework stage locks, then the output pane animates open.
   const [view, setView] = useState<View>("chat");
   const viewTouched = useRef(false);
-  const chatPanel = useRef<ImperativePanelHandle>(null);
-  const outputPanel = useRef<ImperativePanelHandle>(null);
+  const panelGroup = useRef<ImperativePanelGroupHandle>(null);
+  const lastSplit = useRef<number[]>([50, 50]);
   const [animating, setAnimating] = useState(false);
   const [started, setStarted] = useState(false);
   const [chatStreaming, setChatStreaming] = useState(false);
@@ -145,15 +146,16 @@ export default function Workspace() {
     if (anchorDone && view === "chat" && !viewTouched.current) setView("split");
   }, [anchorDone, view]);
 
-  // Drive the two panels from `view`; the CSS transition on flex-grow animates it.
+  // Drive the layout from `view`; the CSS transition on flex-grow animates it.
   useEffect(() => {
+    if (loading) return;
     setAnimating(true);
     const t = window.setTimeout(() => setAnimating(false), 500);
-    if (view === "chat") { outputPanel.current?.collapse(); chatPanel.current?.expand(); }
-    else if (view === "output") { chatPanel.current?.collapse(); outputPanel.current?.expand(); }
-    else { chatPanel.current?.expand(); outputPanel.current?.expand(); if (chatPanel.current && (chatPanel.current.getSize() < 30 || chatPanel.current.getSize() > 70)) chatPanel.current.resize(50); }
-    return () => window.clearTimeout(t);
-  }, [view]);
+    // One frame later: the panel group applies its default sizes on mount and
+    // would overwrite a layout set in the same commit.
+    const raf = requestAnimationFrame(() => panelGroup.current?.setLayout(view === "chat" ? [100, 0] : view === "output" ? [0, 100] : lastSplit.current));
+    return () => { window.clearTimeout(t); cancelAnimationFrame(raf); };
+  }, [view, loading]);
 
   const handleFrameworkChange = (patch: Partial<FrameworkData>) => patchState((s) => ({
     ...s,
@@ -234,8 +236,8 @@ export default function Workspace() {
         </div>
       </header>
 
-      <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
-        <ResizablePanel ref={chatPanel} defaultSize={100} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
+      <PanelGroup ref={panelGroup} direction="horizontal" className="flex h-full w-full min-h-0 flex-1" onLayout={(sizes) => { if (sizes[0] >= 30 && sizes[1] >= 30) lastSplit.current = sizes; }}>
+        <ResizablePanel defaultSize={100} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
         <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
           <div className="flex min-h-0 flex-1 flex-col">
             <FrameworkChat ref={chatRef} state={state} setup={project.setup} onSetupChange={patchSetup} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
@@ -244,7 +246,7 @@ export default function Workspace() {
         </section>
         </ResizablePanel>
         <ResizableHandle withHandle className={`w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary ${view === "split" ? "" : "hidden"}`} />
-        <ResizablePanel ref={outputPanel} defaultSize={0} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
+        <ResizablePanel defaultSize={0} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
         <section aria-label="Framework output" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card">
           <header className="flex shrink-0 justify-center border-b border-border px-6 py-3">
             <div role="tablist" className="inline-flex gap-1 rounded-xl border border-border bg-background/60 p-1">
@@ -267,7 +269,7 @@ export default function Workspace() {
             <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate</Button>
           </footer>
         </section>        </ResizablePanel>
-      </ResizablePanelGroup>
+      </PanelGroup>
 
       <AlertDialog open={regenOpen} onOpenChange={setRegenOpen}>
         <AlertDialogContent>
