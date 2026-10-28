@@ -2,15 +2,15 @@
  * SCREEN: / — Project list.
  *
  * Header: brand mark "Framework Extractor" (compass icon) left, nav link
- * "Frameworks", avatar "J" right. Hero card: h1 "Framework Extractor", the
- * pitch paragraph, a pill "N frameworks", the logo at the right. Controls row:
- * primary "New Project" button (plus icon, "Creating…" while busy) and a search
- * input ("Search projects…"). Then one row per framework_project: title,
+ * "Frameworks", avatar "J" right. Hero card (centred text, no image): h1
+ * "Framework Extractor", the pitch paragraph, a pill "N frameworks". Controls row:
+ * primary "New Framework" button (plus icon, "Creating…" while busy) and a search
+ * input ("Search frameworks…"). Then one row per framework_project: title,
  * "N steps mapped · Oct 28, 2026" (or "No steps yet"), a trash icon that swaps
  * the row for an inline confirm pane ("Delete this framework?" Cancel / Delete),
  * and a primary "Open →" button.
  *
- * Actions: New Project → create a framework_project (title "Untitled
+ * Actions: New Framework → create a framework_project (title "Untitled
  * Framework", source "empty", setup copied from the most recent project when
  * complete, initial state) → navigate to /framework/:id. Delete → archived:
  * true (never a hard delete). Search filters by title on the client.
@@ -81,23 +81,20 @@ export default function Index() {
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-8 pt-6 sm:px-6 sm:pt-8">
-        <div className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card to-card/40 p-4 sm:p-6 md:flex-row-reverse md:items-center md:justify-between md:gap-8">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-[32rem] w-[32rem] rounded-full bg-primary/10 blur-3xl" aria-hidden />
-          <div className="relative hidden h-32 w-32 shrink-0 place-items-center md:grid md:h-36 md:w-36"><img src="/logo.jpg" alt="" aria-hidden className="h-full w-full rounded-3xl object-contain drop-shadow-xl" /></div>
-          <div className="relative flex min-w-0 flex-1 flex-col items-start gap-3">
-            <div>
-              <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">Framework Extractor</h1>
-              <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-sm">You're already the expert — you just haven't packaged it yet. The Extractor interviews you on how you actually think, work and win, then turns the pattern into a step-by-step framework you can teach, sell or scale.</p>
-            </div>
-            <span className="hidden items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline-flex"><span className="font-semibold text-foreground tabular-nums">{projects.length}</span>{projects.length === 1 ? "framework" : "frameworks"}</span>
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-background px-6 py-10 text-center sm:py-14">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-3xl" aria-hidden />
+          <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-4">
+            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Framework Extractor</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-[15px]">You're already the expert — you just haven't packaged it yet. The Extractor interviews you on how you actually think, work and win, then turns the pattern into a step-by-step framework you can teach, sell or scale.</p>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground"><span className="font-semibold text-foreground tabular-nums">{projects.length}</span>{projects.length === 1 ? "framework" : "frameworks"}</span>
           </div>
         </div>
 
         <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-center">
-          <Button onClick={() => void create()} disabled={creating} className="active:scale-[0.96] transition-transform duration-150">{creating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Creating…</> : <><Plus className="h-3.5 w-3.5" /> New Project</>}</Button>
+          <Button onClick={() => void create()} disabled={creating} className="active:scale-[0.96] transition-transform duration-150">{creating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Creating…</> : <><Plus className="h-3.5 w-3.5" /> New Framework</>}</Button>
           <label className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects…" aria-label="Search projects" className="pl-9" />
+            <Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search frameworks…" aria-label="Search frameworks" className="pl-9" />
           </label>
         </div>
 
@@ -107,7 +104,7 @@ export default function Index() {
           ) : error ? (
             <div role="alert"><Empty title="Something went wrong" body={error} cta={<Button variant="outline" onClick={() => void load()}>Try again</Button>} /></div>
           ) : projects.length === 0 ? (
-            <Empty title="Pull your first framework out of your head" body="Start a project and the Extractor will interview you, then map your thinking into a framework you can teach and sell." cta={<Button onClick={() => void create()} disabled={creating}>{creating ? "Creating…" : "New Project"}</Button>} />
+            <Empty title="Pull your first framework out of your head" body="Start a project and the Extractor will interview you, then map your thinking into a framework you can teach and sell." cta={<Button onClick={() => void create()} disabled={creating}>{creating ? "Creating…" : "New Framework"}</Button>} />
           ) : filtered.length === 0 ? (
             <Empty title={`No frameworks match “${search.trim()}”`} body="Try a different search." />
           ) : (
@@ -132,7 +129,7 @@ export default function Index() {
                           <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground"><span className="tabular-nums">{steps > 0 ? `${steps} ${steps === 1 ? "step" : "steps"} mapped` : "No steps yet"}</span><span aria-hidden>·</span><span>{fmt(p.updated_at)}</span></p>
                         </Link>
                         <div className="flex items-center gap-2">
-                          <button type="button" className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label={`Delete project — ${p.title}`} onClick={() => setPendingDelete(p.id)}><Trash2 className="h-3.5 w-3.5" /></button>
+                          <button type="button" className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label={`Delete framework — ${p.title}`} onClick={() => setPendingDelete(p.id)}><Trash2 className="h-3.5 w-3.5" /></button>
                           <Button asChild size="sm" className="active:scale-[0.96] transition-transform duration-150"><Link to={`/framework/${p.id}`}>Open <ArrowRight className="h-3.5 w-3.5" /></Link></Button>
                         </div>
                       </>

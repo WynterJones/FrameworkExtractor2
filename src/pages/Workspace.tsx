@@ -1,6 +1,7 @@
 /**
  * SCREEN: /framework/:id — the two-pane workspace (fixed to the viewport, each
- * pane scrolls internally; stacks under 1024px).
+ * pane scrolls internally; a draggable divider resizes the split; the right
+ * pane sits on the lighter card surface).
  *
  * Header: "← Back" · editable title (pencil focuses it) · autosave chip
  * (Saving… / Saved / Save failed · Retry) · "Download ▾" dropdown (Markdown
@@ -37,6 +38,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Download, FileText, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -198,8 +200,11 @@ export default function Workspace() {
         </div>
       </header>
 
-      <div className={`grid min-h-0 flex-1 items-stretch ${outputExpanded ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
-        <section aria-label="Creative Director chat" className={`flex min-h-0 max-h-[72vh] flex-col border-b border-border lg:max-h-none lg:border-b-0 lg:border-r ${outputExpanded ? "hidden" : ""}`}>
+      <ResizablePanelGroup direction="horizontal" autoSaveId="fe-workspace" className="min-h-0 flex-1">
+        {!outputExpanded && (
+          <>
+            <ResizablePanel defaultSize={50} minSize={30}>
+        <section aria-label="Creative Director chat" className="flex h-full min-h-0 flex-col">
           <SetupBar setup={project.setup} onChange={patchSetup} />
           <div className="flex min-h-0 flex-1 flex-col">
             <FrameworkChat ref={chatRef} state={state} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
@@ -207,7 +212,12 @@ export default function Workspace() {
           </div>
         </section>
 
-        <section aria-label="Framework output" className="flex min-h-0 flex-col">
+            </ResizablePanel>
+            <ResizableHandle withHandle className="w-px bg-border after:w-2 hover:bg-primary/60 data-[resize-handle-active]:bg-primary" />
+          </>
+        )}
+        <ResizablePanel defaultSize={50} minSize={30}>
+        <section aria-label="Framework output" className="flex h-full min-h-0 flex-col bg-card">
           <header className="flex shrink-0 items-stretch justify-between gap-3 border-b border-border px-6">
             <div role="tablist" className="flex gap-6">
               {(["framework", "teaching"] as const).map((t) => (
@@ -232,8 +242,8 @@ export default function Workspace() {
             <span className="text-[11px] text-muted-foreground tabular-nums">{FE_REGENERATE_CREDITS} credits</span>
             <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate</Button>
           </footer>
-        </section>
-      </div>
+        </section>        </ResizablePanel>
+      </ResizablePanelGroup>
 
       <AlertDialog open={regenOpen} onOpenChange={setRegenOpen}>
         <AlertDialogContent>
