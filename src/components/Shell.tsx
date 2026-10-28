@@ -41,7 +41,7 @@ export default function Shell() {
   };
 
   const item = "group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors";
-  const active = "bg-muted/70 font-medium text-foreground before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary";
+  const active = "bg-muted/70 font-medium text-foreground";
   const idle = "text-muted-foreground hover:bg-muted/40 hover:text-foreground";
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background md:flex-row">
