@@ -1,8 +1,10 @@
 /**
  * SCREEN: / — Project list.
  *
- * Header: brand mark "Framework Extractor" (compass icon) left, nav link
- * "Frameworks", avatar "J" right. Hero card (centred text, no image): h1
+ * Header: brand mark "Framework Extractor" (compass icon) left, avatar "J"
+ * right, no nav. Footer: brand + tagline, three link columns (Product:
+ * Frameworks, How it works, Examples · Support: Help centre, Contact · Legal:
+ * Privacy, Terms; stubs toast) and a copyright line. Hero card (centred text, no image): h1
  * "Framework Extractor", the pitch paragraph, a pill "N frameworks". Controls row:
  * primary "New Framework" button (plus icon, "Creating…" while busy) and a search
  * input ("Search frameworks…"). Then one row per framework_project: title,
@@ -24,6 +26,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Boxes, Compass, Loader2, Plus, Search, Trash2 } from "lucide-react";
 import AppBrand from "@/components/AppBrand";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { onEntityChange } from "@/lib/mock/entities";
 import { createProject, deleteProject, listProjects } from "@/lib/framework/storage";
@@ -69,18 +72,15 @@ export default function Index() {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <AppBrand name="Framework Extractor" icon={<Compass className="h-5 w-5" />} />
-          <nav className="hidden items-center gap-1 text-sm md:flex">
-            <Link to="/" className="rounded-md px-3 py-1.5 font-medium text-foreground">Frameworks</Link>
-          </nav>
           <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-xs font-bold" aria-label="Jordan Lee">J</span>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-8 pt-6 sm:px-6 sm:pt-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8">
         <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-background px-6 py-10 text-center sm:py-14">
           <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-3xl" aria-hidden />
           <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-4">
@@ -141,6 +141,41 @@ export default function Index() {
           )}
         </div>
       </main>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-sm">
+            <AppBrand name="Framework Extractor" icon={<Compass className="h-5 w-5" />} />
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Pull the framework out of your head. Name it. Teach it. A Creative Director interview that turns what you already do into something you can sell.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Product</h4>
+              <ul className="space-y-1.5">
+                <li><Link to="/" className="text-foreground/80 hover:text-foreground">Frameworks</Link></li>
+                <li><button type="button" className="text-foreground/80 hover:text-foreground" onClick={() => toast("Stubbed: how it works")}>How it works</button></li>
+                <li><button type="button" className="text-foreground/80 hover:text-foreground" onClick={() => toast("Stubbed: examples")}>Examples</button></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Support</h4>
+              <ul className="space-y-1.5">
+                <li><button type="button" className="text-foreground/80 hover:text-foreground" onClick={() => toast("Stubbed: help centre")}>Help centre</button></li>
+                <li><button type="button" className="text-foreground/80 hover:text-foreground" onClick={() => toast("Stubbed: contact")}>Contact</button></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Legal</h4>
+              <ul className="space-y-1.5">
+                <li><button type="button" className="text-foreground/80 hover:text-foreground" onClick={() => toast("Stubbed: privacy")}>Privacy</button></li>
+                <li><button type="button" className="text-foreground/80 hover:text-foreground" onClick={() => toast("Stubbed: terms")}>Terms</button></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-border">
+          <p className="mx-auto max-w-5xl px-4 py-4 text-xs text-muted-foreground sm:px-6">© 2026 Framework Extractor. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }
