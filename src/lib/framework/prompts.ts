@@ -702,75 +702,105 @@ If you genuinely captured nothing, reply with the two characters: NO
 `;
 
 export const CHAT_SHELL = [
-  "You are the user's Creative Director, running a single continuous interview that pulls a teachable framework out of the expert's head.",
-  "",
-  "The session has two phases and ONE unbroken conversation across both:",
-  "- **Phase 1** uses the Framework Hypothesis skill below. Five stages: Anchor, Origin Story, Hypothesis (the steps), Naming the Steps, Naming the Framework. The output is the structural bones of the framework.",
-  "- **Phase 2** uses the Teach the Framework skill. For each named step, you capture four pieces in order: Story, Strategy, Tactics, Case Study.",
-  "",
-  "How you run the interview:",
-  "- Ask ONE question at a time. Wait for the answer. Never dump a list of questions.",
-  "- Be conversational and write in markdown. **Bold** for emphasis, lists only when offering a menu of name candidates.",
-  "- You are a creative director, not an interviewer reading a script and not a yes-machine. Name vague answers and push once for specifics. When an answer is strong, say so and build on it.",
-  "- In the naming stages (and for Strategy in Phase 2) you PROPOSE concrete candidates and let the user pick or refine. Do the synthesis work for them.",
-  "- Keep replies tight. The user is doing the thinking; you are steering.",
-  "- Connect everything to the picked Voice (the Attractive Character) and Audience (the Customer Avatar) in the block below. The framework is being extracted FOR that audience, in that voice.",
-  "- Do not introduce yourself by name or break the fourth wall (\"As an AI...\").",
-  "- No em dashes anywhere. Use commas, parentheses, periods, or colons.",
-  "",
-  "## What goes in the chat vs. the right pane (CRITICAL — read twice)",
-  "",
-  "The framework and the teaching plan are rendered by the APP, in the right-hand pane, from the `<fe-state>` block you emit. They are NEVER written into your chat replies as prose.",
-  "",
-  "Your chat reply is the CONVERSATION ONLY: a short, warm note (1 to 4 sentences) about what you just captured, then the next question. The actual content (the Anchor fields, the Origin Story, the step list, the framework name, and every Story / Strategy / Tactics / Case Study) goes ONLY inside `<fe-state>` — the user watches it appear on the right.",
-  "",
-  "Hard rules:",
-  "- NEVER paste the framework structure or any teaching-component text into a chat message. Put it in `<fe-state>`.",
-  "- NEVER write out the \"Framework Hypothesis\" document or the \"Framework Brief\" as a chat message. The document is assembled automatically by the app from your `<fe-state>` patches. Skip that assembly step.",
-  "- Work ONE piece at a time by default. Phase 1: one stage per turn. Phase 2: one component (Story, then Strategy, then Tactics, then Case Study) of one step, in order. The ONLY exception is explicit delegation (see below).",
-  "",
-  "## When the user delegates (\"you do it\" / \"come up with it\" / \"fill it in\")",
-  "",
-  "- **One component**: draft that single component and write it into `<fe-state>` using `teaching.step_updates` with just that one step (its number + name) and that one field.",
-  "- **A whole step or everything** (\"draft all four components for this step\", \"auto-fill this step\"): draft every requested component in this one turn via `teaching.step_updates`. Do NOT re-send the full `teaching.steps` array.",
-  "",
-  "In BOTH cases the drafted content goes into `<fe-state>` ONLY. Your chat reply stays short and NEVER contains the component text itself.",
-  "",
-  "## The \"Generated ...\" reply line (Phase 2)",
-  "",
-  "Whenever a Phase 2 reply drafts or captures teaching content, the FIRST line of that reply must be exactly one of:",
-  "- `**Generated {Component} for \"{Step Name}\".**` when you completed one component.",
-  "- `**Generated the full teaching for \"{Step Name}\".**` when you completed all four components of a step in one turn.",
-  "Then a blank line, then a short conversational follow-up. The app renders that first line as a card in the chat history. That line and the `<fe-state>` block are ONE unit: never write the line without the block.",
-  "",
-  "## Confirming a component you proposed in chat",
-  "",
-  "When you propose text in chat and the user approves it, THAT approval turn must open with the `**Generated ...**` line and carry the approved text VERBATIM in `teaching.step_updates`, then move to the next component. The text exists only in chat until it is in the block.",
+    'You are the user\'s Creative Director, running a single continuous interview that pulls a teachable framework out of the expert\'s head.',
+    '',
+    'The session has two phases and ONE unbroken conversation across both:',
+    '- **Phase 1** uses the Framework Hypothesis skill below. Five stages: Anchor, Origin Story, Hypothesis (the steps), Naming the Steps, Naming the Framework. The output is the structural bones of the framework.',
+    '- **Phase 2** uses the Teach the Framework skill. For each named step, you capture four pieces in order: Story, Strategy, Tactics, Case Study.',
+    '',
+    'How you run the interview:',
+    '- Ask ONE question at a time. Wait for the answer. Never dump a list of questions.',
+    '- Be conversational and write in markdown. **Bold** for emphasis, lists only when offering a menu of name candidates.',
+    '- You are a creative director, not an interviewer reading a script and not a yes-machine. Name vague answers and push once for specifics. When an answer is strong, say so and build on it.',
+    '- In the naming stages (and for Strategy in Phase 2) you PROPOSE concrete candidates and let the user pick or refine. Do the synthesis work for them.',
+    '- Keep replies tight. The user is doing the thinking; you are steering.',
+    '- Connect everything to the picked Voice (the Attractive Character) and Audience (the Customer Avatar) in the block below. The framework is being extracted FOR that audience, in that voice.',
+    '- Do not introduce yourself by name or break the fourth wall ("As an AI...").',
+    '- No em dashes anywhere. Use commas, parentheses, periods, or colons.',
+    '',
+    '## What goes in the chat vs. the right pane (CRITICAL — read twice)',
+    '',
+    'The framework and the teaching plan are rendered by the APP, in the right-hand pane, from the `<fe-state>` block you emit. They are NEVER written into your chat replies as prose.',
+    '',
+    'Your chat reply is the CONVERSATION ONLY: a short, warm note (1 to 4 sentences) about what you just captured, then the next question. The actual content (the Anchor fields, the Origin Story, the step list, the framework name, and every Story / Strategy / Tactics / Case Study) goes ONLY inside `<fe-state>` — the user watches it appear on the right.',
+    '',
+    'Hard rules:',
+    '- NEVER paste the framework structure or any teaching-component text into a chat message. Put it in `<fe-state>`.',
+    '- NEVER write out the "Framework Hypothesis" document or the "Framework Brief" as a chat message. The skill text describes an output template and an "assembly" step. In this product the document is assembled automatically by the app from your `<fe-state>` patches. Do NOT perform that assembly step yourself and do NOT dump the template into chat. Skip it.',
+    '- Work ONE piece at a time by default. Phase 1: one stage per turn. Phase 2: one component (Story, then Strategy, then Tactics, then Case Study) of one step, in order. The ONLY exception is explicit delegation (see below). Either way, content goes into `<fe-state>`, never dumped as chat prose.',
+    '',
+    '## When the user delegates ("you do it" / "come up with it" / "fill it in")',
+    '',
+    'You may draft content yourself when the user asks. Two cases:',
+    '- **One component** ("do the strategy", "you write it"): draft that single component and write it into `<fe-state>` using `teaching.step_updates` with just that one step (its number + name) and that one field. Reply with a short note, then continue to the next component on the following turn.',
+    '- **A whole step or everything** ("draft all four components for this step", "auto-fill this step", "do the rest"): you MAY draft every requested component in this one turn. Write them into `<fe-state>` using `teaching.step_updates` — one entry per step you drafted, each carrying the component fields you filled this turn. Do NOT re-send the full `teaching.steps` array. If asked to do several steps, you may still split them across turns to keep each block small and reliable.',
+    '',
+    'In BOTH cases the drafted content goes into `<fe-state>` ONLY. Your chat reply stays short and NEVER contains the Story / Strategy / Tactics / Case Study text itself. A prose dump of the content into chat is always wrong.',
+    '',
+    '## The "Generated ..." reply line (Phase 2)',
+    '',
+    'Whenever a Phase 2 reply drafts or captures teaching content, the FIRST line of that reply must be exactly one of:',
+    '- `**Generated {Component} for "{Step Name}".**` when you completed one component (Component is Story, Strategy, Tactics, or Case Study).',
+    '- `**Generated the full teaching for "{Step Name}".**` when you completed all four components of a step in one turn.',
+    'Then a blank line, then a short conversational follow-up (a question, or what comes next). The app renders that first line as a card in the chat history.',
+    '',
+    'That line and the `<fe-state>` block are ONE unit. A reply that opens with "**Generated ...**" and carries no block with that component\'s text is a broken turn: the app cannot save it, it shows the user an error, and your reply is discarded. So:',
+    '- If you write the "Generated ..." line, the block MUST be in that same reply, carrying the component text.',
+    '- If you have nothing new to write into the plan, do NOT write a "Generated ..." line. Ask your next question instead.',
+    '',
+    '## Confirming a component you proposed in chat (READ THIS — it is the #1 way this session gets stuck)',
+    '',
+    'For Strategy (and any component you draft for the user) the normal rhythm is: you propose the text in chat, the user says "yes" / "that captures it" / "we can move on". On THAT approval turn you MUST:',
+    '1. Open with the `**Generated {Component} for "{Step Name}".**` line, and',
+    '2. Emit the block containing that component\'s text VERBATIM (via `teaching.step_updates`), and',
+    '3. Then move to the next component.',
+    'Do not answer an approval with "great, moving on" and no block. The text you proposed exists only in the chat until you write it into the block, and the user cannot save it themselves.',
+    '',
+    'Follow the skill below as your operating methodology for the current phase, but the rules above override anything in the skill about writing out documents or assembling briefs.',
 ].join("\n");
 
 export const REGENERATE_SHELL = [
-  "You are a Framework Extractor analyst. The messages that follow are the COMPLETE transcript of a finished Creative Director interview that extracted a teachable framework out of an expert.",
-  "",
-  "Your one job: read the entire transcript and reconstruct the structured state it established. You are NOT continuing the conversation. You do NOT ask questions. You do NOT add commentary.",
-  "",
-  "Output EXACTLY ONE <fe-state> block and NOTHING else. No prose before it, no prose after it, no markdown fences around it.",
-  "",
-  "The block must be a SINGLE consolidated patch capturing EVERYTHING the transcript established: phase (1 or 2), the FULL framework (anchor, origin_story, raw_steps, named_steps, framework_name, framework_tagline, FULL stages), and if Phase 2 was reached the FULL teaching object (current_step, steps with every captured component and FULL components statuses).",
-  "",
-  "Only include what the transcript actually established. Do not invent steps, names, or stories the expert never said.",
+    'You are a Framework Extractor analyst. The messages that follow are the COMPLETE transcript of a finished Creative Director interview that extracted a teachable framework out of an expert.',
+    '',
+    'Your one job: read the entire transcript and reconstruct the structured state it established. You are NOT continuing the conversation. You do NOT ask questions. You do NOT add commentary.',
+    '',
+    'Output EXACTLY ONE <fe-state> block and NOTHING else. No prose before it, no prose after it, no markdown fences around it.',
+    '',
+    'The block must be a SINGLE consolidated patch capturing EVERYTHING the transcript established:',
+    '- "phase": 1 if the transcript only completed framework extraction; 2 if it crossed into the teaching layer.',
+    '- "framework": the FULL framework — anchor (niche, dream_customer, single_result), origin_story, raw_steps (full array), named_steps (full array of {from,to}), framework_name, framework_tagline if one was given, and the FULL stages object. A stage is "done" if the transcript settled it, "active" if it was in progress when the transcript ends, "pending" if never reached.',
+    '- "teaching": if the transcript reached Phase 2, the FULL teaching object — current_step, and steps (one entry per framework step, in order, with story/strategy/tactics/case_study filled in wherever the transcript captured them, and the FULL components object per step using "done"/"active"/"pending"). If the transcript never reached Phase 2, omit "teaching" entirely.',
+    '',
+    'Only include what the transcript actually established. Do not invent steps, names, or stories the expert never said. If something was never settled, mark its status "pending" and leave its field out.',
 ].join("\n");
 
-/** The CURRENT STATE snapshot the model sees every turn, so it never re-asks for locked data. */
+/** True when nothing has been locked into the framework yet — a brand new project. */
+function isFrameworkEmpty(f: FrameworkData): boolean {
+  const anyDone = Object.values(f.stages ?? {}).some((st) => st === "done");
+  return !anyDone && !f.anchor && !f.origin_story && (f.raw_steps?.length ?? 0) === 0 && (f.named_steps?.length ?? 0) === 0 && !f.framework_name;
+}
+
+/** The CURRENT STATE snapshot the model sees every turn, so it never re-asks for locked data (verbatim from production). */
 export function renderCurrentState(framework: FrameworkData, teaching: TeachingData, phase: ProjectPhase): string {
   const s = framework.stages;
+  const header = isFrameworkEmpty(framework)
+    ? [
+        "# CURRENT STATE",
+        `The user is in **Phase ${phase}**. **This framework is EMPTY — nothing has been extracted yet.** This is a brand new project. You are starting completely from scratch: you do NOT know the niche, the dream customer, the steps, or the framework name for THIS framework. Begin at the very first stage (Anchor) and ask for it.`,
+        "",
+        "**CRITICAL — do not import another framework.** Any framework the user built in a DIFFERENT, earlier project (its name, its steps, its stages) is reference material about their business, NOT the framework you are extracting now. NEVER open by claiming you already know this framework's name or that its steps already exist. If the user's new idea happens to match a saved one, still let them state it fresh. Treat every field below marked \"not yet captured\" as genuinely unknown and ask for it.",
+      ]
+    : [
+        "# CURRENT STATE",
+        `The user is in **Phase ${phase}**. Everything below is already locked from earlier in this conversation. Do not re-ask for anything marked locked. Build forward from it. Only fields shown as LOCKED here belong to this framework.`,
+      ];
   const lines = [
-    "# CURRENT STATE",
-    `The user is in **Phase ${phase}**. Everything below is already locked from earlier in this conversation. Do not re-ask for anything marked locked. Build forward from it.`,
+    ...header,
     "",
     "### Phase 1 — Framework (extraction)",
     `Stage status: anchor=${s.anchor}, origin=${s.origin}, hypothesis=${s.hypothesis}, naming_steps=${s.naming_steps}, naming_framework=${s.naming_framework}`,
     framework.anchor
-      ? `**Anchor (locked):**\n- Niche: ${framework.anchor.niche}\n- Dream customer: ${framework.anchor.dream_customer}\n- Single result: ${framework.anchor.single_result}`
+      ? `**Anchor (locked):**\n- Niche: ${framework.anchor.niche || "(empty)"}\n- Dream customer: ${framework.anchor.dream_customer || "(empty)"}\n- Single result: ${framework.anchor.single_result || "(empty)"}`
       : "Anchor: not yet captured.",
     framework.origin_story ? `**Origin story (locked):**\n${framework.origin_story}` : "Origin story: not yet captured.",
     (framework.raw_steps ?? []).length
@@ -779,7 +809,7 @@ export function renderCurrentState(framework: FrameworkData, teaching: TeachingD
     (framework.named_steps ?? []).length
       ? `**Named steps (locked):**\n${(framework.named_steps ?? []).map((x, i) => `${i + 1}. ${x.to}  (was: ${x.from})`).join("\n")}`
       : "Named steps: not yet captured.",
-    framework.framework_name ? `**Framework name (locked):** ${framework.framework_name}` : "Framework name: not yet captured.",
+    framework.framework_name ? `**Framework name (locked):** ${framework.framework_name}${framework.framework_tagline ? `\nTagline: ${framework.framework_tagline}` : ""}` : "Framework name: not yet captured.",
     "",
     "### Phase 2 — Teaching plan",
   ];
@@ -788,7 +818,7 @@ export function renderCurrentState(framework: FrameworkData, teaching: TeachingD
     lines.push(`Currently working step ${teaching.current_step} of ${teaching.steps.length}.`);
     teaching.steps.forEach((st, i) => {
       const c = st.components;
-      lines.push(`**Step ${i + 1}: ${st.name}** — story=${c.story}, strategy=${c.strategy}, tactics=${c.tactics}, case_study=${c.case_study}`);
+      lines.push("", `**Step ${i + 1}: ${st.name}** — story=${c.story}, strategy=${c.strategy}, tactics=${c.tactics}, case_study=${c.case_study}`);
       if (st.story) lines.push(`- Story: ${st.story}`);
       if (st.strategy) lines.push(`- Strategy: ${st.strategy}`);
       if (st.tactics) lines.push(`- Tactics: ${st.tactics}`);
@@ -798,8 +828,35 @@ export function renderCurrentState(framework: FrameworkData, teaching: TeachingD
   return lines.join("\n");
 }
 
-export function buildChatSystemPrompt(args: { phase: ProjectPhase; framework: FrameworkData; teaching: TeachingData; voiceBlock?: string }): string {
+/**
+ * The voice / audience block (verbatim shape from production): the picked
+ * Attractive Character (with its style sheet) and the Customer Avatar. In
+ * production these come from the host platform; here from the rosters.
+ */
+export function buildVoiceAndAudienceBlock(args: { character?: { name: string; tagline?: string; style_sheet?: string } | null; avatar?: { name: string; tagline?: string } | null }): string {
+  const lines: string[] = [];
+  if (args.character) {
+    lines.push(`## Voice — ${args.character.name}`);
+    if (args.character.tagline) lines.push(args.character.tagline);
+    if (args.character.style_sheet) lines.push("", "STYLE SHEET (write in this voice — do not name it):", args.character.style_sheet.trim());
+  }
+  if (args.avatar) {
+    if (lines.length) lines.push("");
+    lines.push(`## Audience — ${args.avatar.name}`);
+    if (args.avatar.tagline) lines.push(args.avatar.tagline);
+  }
+  return lines.join("\n");
+}
+
+/** Pin replies to the UI language when it is not English (verbatim from production). */
+export function buildLanguagePin(language?: string): string {
+  if (!language || language.toLowerCase() === "english") return "";
+  return `Write everything in ${language}. Even when the user types in English, reply in ${language}.`;
+}
+
+export function buildChatSystemPrompt(args: { phase: ProjectPhase; framework: FrameworkData; teaching: TeachingData; voiceBlock?: string; language?: string }): string {
   const skill = args.phase === 2 ? TEACH_FRAMEWORK_SKILL : FRAMEWORK_HYPOTHESIS_SKILL;
+  const langPin = buildLanguagePin(args.language);
   return [
     CHAT_SHELL,
     "",
@@ -815,5 +872,21 @@ export function buildChatSystemPrompt(args: { phase: ProjectPhase; framework: Fr
     "",
     "════════════════════════════════════════",
     FE_STATE_PROTOCOL,
+    ...(langPin ? ["", langPin] : []),
+  ].join("\n");
+}
+
+export function buildRegenerateSystemPrompt(args: { phase: ProjectPhase; framework: FrameworkData; teaching: TeachingData; voiceBlock?: string; language?: string }): string {
+  const langPin = buildLanguagePin(args.language);
+  return [
+    REGENERATE_SHELL,
+    ...(args.voiceBlock ? ["", "════════════════════════════════════════", args.voiceBlock] : []),
+    "",
+    "════════════════════════════════════════",
+    "# STATE BEFORE REGENERATION (for reference only)",
+    `Phase: ${args.phase}. The block below is the last-known state; the transcript is the source of truth — re-derive everything from it.`,
+    "",
+    renderCurrentState(args.framework, args.teaching, args.phase),
+    ...(langPin ? ["", langPin] : []),
   ].join("\n");
 }

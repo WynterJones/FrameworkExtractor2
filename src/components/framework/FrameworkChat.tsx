@@ -30,6 +30,10 @@ export interface FrameworkChatProps {
   /** The voice and audience; all three must be picked before Start is enabled. */
   setup: FrameworkSetup;
   onSetupChange: (p: Partial<FrameworkSetup>) => void;
+  /** The prompt's voice / audience block for the picked character and avatar. */
+  voiceBlock?: string;
+  /** A template's Anchor answer: sent automatically right after the kickoff greeting. */
+  firstAnswer?: string;
 }
 export interface FrameworkChatHandle { send: (text: string) => void }
 
@@ -58,7 +62,7 @@ function GenCard({ generating, label }: { generating: boolean; label: string }) 
 }
 
 export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>(function FrameworkChat(
-  { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart, setup, onSetupChange }, ref,
+  { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart, setup, onSetupChange, voiceBlock, firstAnswer }, ref,
 ) {
   const messages = state.chat_messages;
   const [runtime, setRuntime] = useState<Runtime[]>(messages);
@@ -82,6 +86,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   const startedRef = useRef(started); useEffect(() => { startedRef.current = started; }, [started]);
   const abortRef = useRef<{ aborted: boolean } | null>(null);
   const greeted = useRef(messages.length > 0);
+  const pendingFirstAnswer = useRef(firstAnswer);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const atBottom = useRef(true);
@@ -118,7 +123,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
         raw = soFar;
         const visible = stripFeState(soFar);
         setRuntime((prev) => prev.map((m) => (m.id === assistant.id ? { ...m, content: visible } : m)));
-      }, { prompt: buildChatSystemPrompt({ phase: stateRef.current.phase, framework: stateRef.current.framework, teaching: stateRef.current.teaching }), delayMs: 400, charsPerTick: 6, tickMs: 14 });
+      }, { prompt: buildChatSystemPrompt({ phase: stateRef.current.phase, framework: stateRef.current.framework, teaching: stateRef.current.teaching, voiceBlock }), delayMs: 400, charsPerTick: 6, tickMs: 14 });
       const patches = extractFeStatePatches(raw);
       const visibleFinal = stripFeState(raw);
       const failure = detectGenerationFailure(raw, visibleFinal, patches);
@@ -146,8 +151,14 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
       }
       commit((prev) => prev.filter((m) => m.id !== assistant.id));
       setError((e as Error).message || "Something went wrong. Tap Try again.");
-    } finally { setStreaming(false); abortRef.current = null; }
-  }, [commit, onStart, onStatePatch, streaming]);
+    } finally {
+      setStreaming(false); abortRef.current = null;
+      // A template hands over its Anchor answer: send it as soon as the greeting lands.
+      if (kickoff && pendingFirstAnswer.current) { const t = pendingFirstAnswer.current; pendingFirstAnswer.current = undefined; window.setTimeout(() => sendRef.current?.(t), 80); }
+    }
+  }, [commit, onStart, onStatePatch, streaming, voiceBlock]);
+  const sendRef = useRef<(t: string) => void>();
+  useEffect(() => { sendRef.current = (t) => void runTurn(t, false); }, [runTurn]);
 
   // Kickoff: greet once, only after the user starts a brand-new project.
   useEffect(() => {

@@ -7,12 +7,16 @@ const table = () => overskill.entities.framework_project;
 export const listProjects = () => table().list("-updated_at") as Promise<FrameworkProject[]>;
 export const getProject = (id: string) => table().get(id) as Promise<FrameworkProject | null>;
 
-/** New projects carry the previous project's setup forward so the user does not re-pick every time. */
-export async function createProject(): Promise<FrameworkProject> {
+/** Create a project with the setup picked in the dashboard composer. */
+export function createProject(setup: FrameworkSetup, source: FrameworkProject["source"] = "empty"): Promise<FrameworkProject> {
+  return table().create({ title: DEFAULT_FRAMEWORK_TITLE, source, setup, state: initialFrameworkState(), archived: false }) as Promise<FrameworkProject>;
+}
+
+/** The most recent complete setup, to pre-fill the composer. */
+export async function lastSetup(): Promise<FrameworkSetup> {
   const [prior] = await listProjects();
   const s = prior?.setup;
-  const carried: FrameworkSetup = s?.character_id && s.voice_id && s.customer_avatar_id ? s : {};
-  return table().create({ title: DEFAULT_FRAMEWORK_TITLE, source: "empty", setup: carried, state: initialFrameworkState(), archived: false }) as Promise<FrameworkProject>;
+  return s?.character_id && s.voice_id && s.customer_avatar_id ? s : {};
 }
 
 export const updateProject = (id: string, patch: Partial<Pick<FrameworkProject, "title" | "source" | "setup" | "state">>) =>

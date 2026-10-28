@@ -7,25 +7,35 @@
 import { overskill } from "@/lib/auth";
 import { initialFrameworkState, type ChatMessage, type FrameworkProject, type FrameworkProjectState } from "@/lib/framework/contract";
 
-export interface AttractiveCharacter { id: string; name: string; description: string }
-export interface Voice { id: string; character_id: string; name: string; description: string }
-export interface CustomerAvatar { id: string; name: string; description: string }
+export interface AttractiveCharacter { id: string; name: string; tagline: string }
+/** A voice is one style sheet under a character; the chat prompt writes in it without naming it. */
+export interface Voice { id: string; character_id: string; name: string; style_sheet: string }
+export interface CustomerAvatar { id: string; name: string; tagline: string }
 
 export const CHARACTERS: AttractiveCharacter[] = [
-  { id: "ac_1", name: "Jordan Lee", description: "Founder voice, direct, first-person" },
-  { id: "ac_2", name: "The Reluctant Hero", description: "Figured it out the hard way, shares the scars" },
-  { id: "ac_3", name: "The Leader", description: "Already there, pulling people up" },
+  { id: "ac_1", name: "Jordan Lee", tagline: "Founder voice, direct, first-person" },
+  { id: "ac_2", name: "The Reluctant Hero", tagline: "Figured it out the hard way, shares the scars" },
+  { id: "ac_3", name: "The Leader", tagline: "Already there, pulling people up" },
 ];
 export const VOICES: Voice[] = [
-  { id: "v_1", character_id: "ac_1", name: "Straight talk", description: "Short sentences, no hedging" },
-  { id: "v_2", character_id: "ac_1", name: "Campfire", description: "Warm, story-led" },
-  { id: "v_3", character_id: "ac_2", name: "Confessional", description: "Candid about the failures" },
-  { id: "v_4", character_id: "ac_3", name: "Keynote", description: "Confident, declarative" },
+  { id: "v_1", character_id: "ac_1", name: "Straight talk", style_sheet: "Short sentences. No hedging. Say the thing, then stop." },
+  { id: "v_2", character_id: "ac_1", name: "Campfire", style_sheet: "Warm and story-led. Open with a scene before the point." },
+  { id: "v_3", character_id: "ac_2", name: "Confessional", style_sheet: "Candid about the failures. Name what went wrong before what worked." },
+  { id: "v_4", character_id: "ac_3", name: "Keynote", style_sheet: "Confident, declarative. Big claims backed by one number." },
 ];
 export const AVATARS: CustomerAvatar[] = [
-  { id: "av_1", name: "Agency owner at $30k/mo", description: "Stuck at 5 clients, doing all the delivery" },
-  { id: "av_2", name: "First-time course creator", description: "Has the expertise, no product yet" },
-  { id: "av_3", name: "Solo chiropractor", description: "Full book, no systems, wants a second location" },
+  { id: "av_1", name: "Agency owner at $30k/mo", tagline: "Stuck at 5 clients, doing all the delivery" },
+  { id: "av_2", name: "First-time course creator", tagline: "Has the expertise, no product yet" },
+  { id: "av_3", name: "Solo chiropractor", tagline: "Full book, no systems, wants a second location" },
+];
+
+/** Starter templates for a user with no idea where to begin: each is the Anchor answer, sent as the first message. */
+export interface FrameworkTemplate { id: string; name: string; blurb: string; anchor: string }
+export const TEMPLATES: FrameworkTemplate[] = [
+  { id: "t_agency", name: "The 4-day agency", blurb: "Get a founder out of client delivery.", anchor: "Done-for-you marketing agencies doing $20k to $50k a month; The founder who still runs every client call and has not taken a real week off in two years; After this, the founder runs the agency from a 4-day week with delivery handled by the team" },
+  { id: "t_launch", name: "The 7-day course launch", blurb: "Sell seats from a small email list.", anchor: "Email launches for course creators; A creator with a 5,000 person list who has never run a launch; They run a 7-day launch that sells 50 seats" },
+  { id: "t_reactivation", name: "Patient reactivation", blurb: "Fill a clinic from its own inactive list.", anchor: "Patient reactivation for single-location chiropractors; The owner with 1,200 inactive patient files and a front desk that only answers the phone; They book 40 reactivated visits in the first 30 days without ad spend" },
+  { id: "t_sales", name: "The one-call close", blurb: "Close high-ticket offers on the first call.", anchor: "High-ticket sales calls for coaches selling $5k+ programs; A coach who gets booked calls but closes fewer than 1 in 5; They close 1 in 3 calls without discounting" },
 ];
 
 type Row = Omit<FrameworkProject, "id" | "created_at" | "updated_at">;

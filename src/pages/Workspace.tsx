@@ -3,7 +3,7 @@
  * pane scrolls internally; a draggable divider resizes the split; the right
  * pane sits on the lighter card surface).
  *
- * Header: "← Back" · editable title (pencil focuses it) · autosave chip
+ * Header: editable title (pencil focuses it) · layout switch · autosave chip
  * (Saving… / Saved / Save failed · Retry) · "Download ▾" dropdown (Markdown
  * .md, PowerPoint .pptx). Everything autosaves (1 s debounce, flush on
  * unmount); there is no Save button and no Library button.
@@ -36,8 +36,8 @@
  * The full spec is prd.md at the repo root.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Check, ChevronDown, Columns2, Download, FileText, Loader2, MessageSquare, PanelRight, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle, Check, ChevronDown, Columns2, Download, FileText, Loader2, MessageSquare, PanelRight, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 // The shadcn ResizablePanelGroup wrapper does not forward refs; the primitive does.
@@ -53,7 +53,8 @@ import { getProject, updateProject } from "@/lib/framework/storage";
 import { applyFeStatePatches, FE_REGENERATE_CREDITS, isInterviewStarted, normalizeTeaching, phase1Complete, reconcileTeachingSteps, type FeStatePatch } from "@/lib/framework/protocol";
 import { fakeAI } from "@/lib/mock/ai";
 import { replayInterview } from "@/lib/mock/interview";
-import { REGENERATE_SHELL } from "@/lib/framework/prompts";
+import { buildRegenerateSystemPrompt, buildVoiceAndAudienceBlock } from "@/lib/framework/prompts";
+import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import { DEFAULT_FRAMEWORK_TITLE, FRAMEWORK_STAGE_KEYS, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
 
 type Tab = "framework" | "teaching";
@@ -69,6 +70,8 @@ function tabDot(state: FrameworkProjectState, tab: Tab) {
 export default function Workspace() {
   const navigate = useNavigate();
   const { id = "" } = useParams();
+  // The dashboard composer hands over `start` (setup already picked) and, for a template, the first answer.
+  const handoff = (useLocation().state ?? {}) as { start?: boolean; firstAnswer?: string };
   const [project, setProject] = useState<FrameworkProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("framework");
@@ -95,7 +98,7 @@ export default function Workspace() {
       const p = await getProject(id);
       if (cancelled) return;
       if (p) {
-        setProject(p); setStarted(isInterviewStarted(p.state.chat_messages));
+        setProject(p); setStarted(isInterviewStarted(p.state.chat_messages) || !!handoff.start);
         if (!tabTouched.current) setTab(p.state.phase === 2 ? "teaching" : "framework");
         if (p.state.framework.stages.anchor === "done") setView("split");
       }
@@ -176,11 +179,17 @@ export default function Workspace() {
   };
   const handleStreamingChange = useCallback((s: boolean) => { setChatStreaming(s); if (!s) setAutoFillStep(null); }, []);
 
+  /** The voice / audience block for the prompts, resolved from the picked ids. */
+  const voiceBlock = project ? buildVoiceAndAudienceBlock({
+    character: (() => { const c = CHARACTERS.find((x) => x.id === project.setup.character_id); const v = VOICES.find((x) => x.id === project.setup.voice_id); return c ? { name: c.name, tagline: c.tagline, style_sheet: v?.style_sheet } : null; })(),
+    avatar: AVATARS.find((x) => x.id === project.setup.customer_avatar_id) ?? null,
+  }) : "";
+
   const handleRegenerate = async () => {
     if (!project) return;
     setRegenerating(true);
     const userTurns = project.state.chat_messages.filter((m) => m.role === "user").map((m) => m.content);
-    const rebuilt = await fakeAI(() => replayInterview(userTurns), { prompt: REGENERATE_SHELL, delayMs: 1800 });
+    const rebuilt = await fakeAI(() => replayInterview(userTurns), { prompt: buildRegenerateSystemPrompt({ phase: project.state.phase, framework: project.state.framework, teaching: project.state.teaching, voiceBlock }), delayMs: 1800 });
     patchState((s) => ({ ...s, phase: rebuilt.phase, framework: rebuilt.framework, teaching: rebuilt.teaching }));
     setRegenerating(false);
     toast("Framework and teaching plan re-derived from the conversation");
@@ -198,17 +207,16 @@ export default function Workspace() {
     <div role="alert" className="m-7 flex flex-col items-center rounded-xl border border-dashed border-border px-6 py-14 text-center">
       <h3 className="text-base font-bold">We couldn't open this framework</h3>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">This framework doesn't exist in this workspace. Head back and pick one from the list.</p>
-      <Button variant="outline" className="mt-4" onClick={() => navigate("/")}>Back to frameworks</Button>
+      <Button variant="outline" className="mt-4" onClick={() => navigate("/")}>Back to the dashboard</Button>
     </div>
   );
 
   const { state } = project;
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+    <div className="flex h-full flex-col overflow-hidden bg-background">
       <header className="shrink-0 border-b border-border bg-card px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm" className="h-8"><Link to="/"><ArrowLeft className="h-3.5 w-3.5" /> Back</Link></Button>
-          <div className="ml-1 flex min-w-0 flex-1 items-center gap-1 border-l border-border pl-3">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
             <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 46))} className="w-auto min-w-[8ch] max-w-[46ch] rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
             <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
           </div>
@@ -240,7 +248,7 @@ export default function Workspace() {
         <ResizablePanel defaultSize={100} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
         <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
           <div className="flex min-h-0 flex-1 flex-col">
-            <FrameworkChat ref={chatRef} state={state} setup={project.setup} onSetupChange={patchSetup} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
+            <FrameworkChat ref={chatRef} state={state} setup={project.setup} onSetupChange={patchSetup} voiceBlock={voiceBlock} firstAnswer={handoff.firstAnswer} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
               onMessagesChange={(next) => patchState((s) => ({ ...s, chat_messages: next }))} onStatePatch={handleStatePatch} onStreamingChange={handleStreamingChange} />
           </div>
         </section>
