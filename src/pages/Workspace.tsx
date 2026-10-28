@@ -261,7 +261,7 @@ export default function Workspace() {
         </section>
         </ResizablePanel>
         <ResizableHandle withHandle className={`relative w-2 bg-transparent after:inset-y-8 after:w-0.5 after:rounded-full after:bg-transparent after:transition-colors hover:after:bg-primary/50 data-[resize-handle-active]:after:bg-primary [&>div]:border-border/80 [&>div]:bg-card ${effectiveView === "split" ? "" : "hidden"}`} />
-        <ResizablePanel defaultSize={0} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
+        <ResizablePanel defaultSize={0} minSize={30} collapsible collapsedSize={0} className={`${animating ? "panel-animate" : ""} ${effectiveView === "output" ? "md:pl-4" : ""}`}>
         <section aria-label="Framework output" className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-t border-white/[0.09] bg-surface shadow-[inset_1px_1px_0_hsl(0_0%_100%/0.05),-28px_0_56px_-24px_hsl(0_0%_0%/0.9),0_-8px_32px_-20px_hsl(0_0%_0%/0.7)] md:rounded-tl-2xl md:border-l">
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/[0.035] to-transparent" />
           <header className="flex shrink-0 justify-center border-b border-border/60 px-4 py-2.5 sm:px-6 sm:py-3">
