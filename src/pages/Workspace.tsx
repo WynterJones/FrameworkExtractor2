@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Download, Library, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Save, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, Download, FileText, Loader2, PanelLeftClose, PanelLeftOpen, Pencil, Presentation, RefreshCw, Zap } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -33,7 +34,6 @@ export default function Workspace() {
   const [tab, setTab] = useState<Tab>("framework");
   const tabTouched = useRef(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [libraryState, setLibraryState] = useState<SaveState>("idle");
   const [outputExpanded, setOutputExpanded] = useState(false);
   const [started, setStarted] = useState(false);
   const [chatStreaming, setChatStreaming] = useState(false);
@@ -126,11 +126,6 @@ export default function Workspace() {
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${slugify(project.title)}.md` });
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
   };
-  const saveToLibrary = async () => {
-    setLibraryState("saving"); await flushSave();
-    await fakeAI(null, { prompt: "", delayMs: 900 });
-    setLibraryState("saved"); toast("Stubbed: added to your workspace Library");
-  };
 
   if (loading) return <p role="status" className="m-7 inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading project…</p>;
   if (!project) return (
@@ -142,42 +137,34 @@ export default function Workspace() {
   );
 
   const { state } = project;
-  const iconBtn = "h-7 px-3 text-xs";
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
       <header className="shrink-0 border-b border-border bg-card px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm" className={iconBtn}><Link to="/"><ArrowLeft className="h-3.5 w-3.5" /> Back</Link></Button>
+          <Button asChild variant="outline" size="sm" className="h-8"><Link to="/"><ArrowLeft className="h-3.5 w-3.5" /> Back</Link></Button>
           <div className="ml-1 flex min-w-0 flex-1 items-center gap-1 border-l border-border pl-3">
             <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" className="min-w-[8ch] max-w-[46ch] flex-1 rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
             <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
           </div>
-          <div className="flex items-center gap-2">
-            <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-xs font-medium ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}>
-              {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> Save failed</> : saveState === "saved" ? <><Check className="h-3 w-3" /> Saved</> : null}
+          <div className="flex items-center gap-3">
+            <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-xs ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+              {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> Save failed · <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> Saved</> : null}
             </span>
-            <Button variant="outline" size="sm" className={iconBtn} onClick={() => { if (timer.current) window.clearTimeout(timer.current); void flushSave(); }} disabled={saveState === "saving"}><Save className="h-3.5 w-3.5" /> {saveState === "error" ? "Retry" : "Save"}</Button>
-            <Button variant="outline" size="sm" className={iconBtn} onClick={download} title="Download the brief as Markdown (.md)"><Download className="h-3.5 w-3.5" /> Markdown</Button>
-            <Button variant="outline" size="sm" className={iconBtn} onClick={() => toast("Stubbed: PowerPoint export (pptxgenjs builds the same deck client-side)")} title="Download the brief as a PowerPoint deck (.pptx)"><Presentation className="h-3.5 w-3.5" /> PowerPoint</Button>
-            <Button size="sm" className={`${iconBtn} active:scale-[0.96] transition-transform duration-150`} onClick={() => void saveToLibrary()} disabled={libraryState === "saving"}>
-              {libraryState === "saving" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : libraryState === "saved" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Library className="h-3.5 w-3.5" />}
-              {libraryState === "saving" ? "Saving…" : libraryState === "saved" ? "In Library" : "Add to Library"}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8"><Download className="h-3.5 w-3.5" /> Download <ChevronDown className="h-3.5 w-3.5 opacity-60" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={download}><FileText className="h-4 w-4" /> Markdown (.md)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast("Stubbed: PowerPoint export (pptxgenjs builds the same deck client-side)")}><Presentation className="h-4 w-4" /> PowerPoint (.pptx)</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-        {libraryState === "saved" && (
-          <div role="status" className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-600/30 bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-200">
-            <Check className="h-3.5 w-3.5" /> Added to your Library — find it under Documents, or ask your Chief of Staff to pull it up. Saving again updates that same file.
-          </div>
-        )}
       </header>
 
       <div className={`grid min-h-0 flex-1 items-stretch ${outputExpanded ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
         <section aria-label="Creative Director chat" className={`flex min-h-0 max-h-[72vh] flex-col border-b border-border lg:max-h-none lg:border-b-0 lg:border-r ${outputExpanded ? "hidden" : ""}`}>
-          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-3">
-            <h2 className="text-sm font-semibold">Creative Director</h2>
-            <p className="text-xs text-muted-foreground">{state.phase === 2 ? "Phase 2 · Designing the teaching plan" : "Phase 1 · Extracting your framework"}</p>
-          </header>
           <SetupBar setup={project.setup} onChange={patchSetup} />
           <div className="flex min-h-0 flex-1 flex-col">
             <FrameworkChat ref={chatRef} state={state} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
@@ -186,15 +173,16 @@ export default function Workspace() {
         </section>
 
         <section aria-label="Framework output" className="flex min-h-0 flex-col">
-          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-2">
-            <div role="tablist" className="flex gap-1">
+          <header className="flex shrink-0 items-stretch justify-between gap-3 border-b border-border px-6">
+            <div role="tablist" className="flex gap-6">
               {(["framework", "teaching"] as const).map((t) => (
-                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`relative inline-flex items-center gap-2 py-3.5 text-sm transition-colors ${tab === t ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                   <span className={`h-2 w-2 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching plan"}
+                  <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full transition-colors ${tab === t ? "bg-primary" : "bg-transparent"}`} aria-hidden />
                 </button>
               ))}
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
+            <Button variant="ghost" size="icon" className="my-auto h-8 w-8 text-muted-foreground" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
               {outputExpanded ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
             </Button>
           </header>
@@ -205,7 +193,7 @@ export default function Workspace() {
               )}
             </div>
           </div>
-          <footer className="flex shrink-0 items-center gap-3 border-t border-border px-5 py-2.5 pr-24">
+          <footer className="flex shrink-0 items-center gap-3 border-t border-border px-5 py-2.5 ">
             <span className="text-[11px] text-muted-foreground tabular-nums">{FE_REGENERATE_CREDITS} credits</span>
             <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate</Button>
           </footer>

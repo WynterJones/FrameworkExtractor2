@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GraduationCap, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Check, GraduationCap, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditableText } from "./EditableText";
 import { StatusPill, StepNum } from "./StatusPill";
@@ -50,18 +50,24 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
 
   return (
     <>
-      <div className="-mx-1 mb-5 flex flex-wrap gap-1">
+      <ol className="mb-6 flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
         {steps.map((s, n) => {
           const done = TEACHING_COMPONENT_KEYS.every((k) => s.components[k] === "done");
+          const doneCount = TEACHING_COMPONENT_KEYS.filter((k) => s.components[k] === "done").length;
           const active = n === i;
           return (
-            <button key={n} type="button" onClick={() => pick(n)} className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors active:scale-[0.96] ${active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${done ? "bg-emerald-500" : active ? "bg-background/60" : "bg-muted-foreground/40"}`} aria-hidden />
-              {s.name || `Step ${n + 1}`}
-            </button>
+            <li key={n} className="flex-none">
+              <button type="button" onClick={() => pick(n)} aria-current={active ? "step" : undefined} className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors active:scale-[0.98] ${active ? "bg-muted" : "hover:bg-muted/50"}`}>
+                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums ${done ? "bg-emerald-500 text-white" : active ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>{done ? <Check className="h-3 w-3" strokeWidth={3} /> : n + 1}</span>
+                <span className="min-w-0">
+                  <span className={`block whitespace-nowrap text-sm ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{s.name || `Step ${n + 1}`}</span>
+                  <span className="block text-[11px] tabular-nums text-muted-foreground">{doneCount}/4</span>
+                </span>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ol>
 
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>

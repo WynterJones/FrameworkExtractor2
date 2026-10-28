@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import OverSkillBadge from "@/components/OverSkillBadge";
 import Index from "@/pages/Index";
 import Workspace from "@/pages/Workspace";
 import NotFound from "@/pages/NotFound";
@@ -24,7 +23,6 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Sonner />
-            <OverSkillBadge />
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
