@@ -55,8 +55,8 @@ export default function Shell() {
       </header>
       {isMobile && mobileOpen && <button type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-black/60 md:hidden" />}
 
-      <aside className={`${isMobile ? `fixed inset-y-0 left-0 z-50 w-72 transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}` : `relative shrink-0 transition-[width] duration-300 ${collapsed ? "w-14" : "w-64"}`} flex flex-col border-r border-border/60 bg-card`}>
-        <div className={`flex h-14 items-center border-b border-border ${collapsed ? "justify-center" : "justify-between px-3"}`}>
+      <aside className={`${isMobile ? `fixed inset-y-0 left-0 z-50 w-72 transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}` : `relative shrink-0 transition-[width] duration-300 ${collapsed ? "w-14" : "w-64"}`} flex flex-col border-r border-white/[0.07] bg-card shadow-[inset_-1px_0_0_hsl(0_0%_0%/0.5)]`}>
+        <div className={`flex h-14 shrink-0 items-center border-b border-black/40 bg-gradient-to-b from-black/35 to-transparent shadow-[inset_0_-1px_0_hsl(0_0%_100%/0.04)] ${collapsed ? "justify-center" : "justify-between px-3"}`}>
           {!collapsed && (
             <Link to="/" className="flex items-center gap-2">
               <span data-app-icon className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-background text-foreground"><Compass className="h-4 w-4" /></span>
@@ -95,7 +95,7 @@ export default function Shell() {
           ))}
         </nav>
 
-        <div className={`border-t border-border p-3 ${collapsed ? "flex justify-center" : "flex items-center gap-2.5"}`}>
+        <div className={`shrink-0 border-t border-black/40 bg-gradient-to-t from-black/35 to-transparent p-3 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)] ${collapsed ? "flex justify-center" : "flex items-center gap-2.5"}`}>
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-bold" aria-label="Jordan Lee">J</span>
           {!collapsed && <div className="min-w-0"><p className="truncate text-sm font-medium">Jordan Lee</p><p className="truncate text-xs text-muted-foreground">you@example.com</p></div>}
         </div>
