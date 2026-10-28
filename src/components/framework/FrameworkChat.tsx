@@ -9,7 +9,8 @@ import {
   detectGenerationFailure, extractFeStatePatches, stripFeState,
   FE_CHAT_TURN_LIMIT, FE_CREDITS_PER_TURN, FE_LIMIT_WARN_REMAINING, type FeStatePatch,
 } from "@/lib/framework/protocol";
-import type { ChatMessage, FrameworkProjectState } from "@/lib/framework/contract";
+import type { ChatMessage, FrameworkProjectState, FrameworkSetup } from "@/lib/framework/contract";
+import { SetupFields, setupComplete } from "./SetupBar";
 
 /**
  * The Creative Director chat. One continuous thread across both phases.
@@ -26,6 +27,9 @@ export interface FrameworkChatProps {
   /** False for a brand-new project: the pane renders, the greeting waits for Start. */
   started: boolean;
   onStart?: () => void | Promise<void>;
+  /** The voice and audience; all three must be picked before Start is enabled. */
+  setup: FrameworkSetup;
+  onSetupChange: (p: Partial<FrameworkSetup>) => void;
 }
 export interface FrameworkChatHandle { send: (text: string) => void }
 
@@ -54,7 +58,7 @@ function GenCard({ generating, label }: { generating: boolean; label: string }) 
 }
 
 export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>(function FrameworkChat(
-  { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart }, ref,
+  { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart, setup, onSetupChange }, ref,
 ) {
   const messages = state.chat_messages;
   const [runtime, setRuntime] = useState<Runtime[]>(messages);
@@ -166,10 +170,12 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
           {visible.length === 0 && !streaming && (started ? (
             <p className="text-[15px]"><span className="text-shimmer">Getting your Creative Director ready…</span></p>
           ) : (
-            <div className="rounded-2xl border border-border p-5">
-              <strong className="text-[15px] font-semibold">Set the voice and audience, then start</strong>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">The Creative Director pulls your framework out in the voice of one Attractive Character, for one Customer Avatar. Pick all three above so the interview sounds like you.</p>
-              <Button className="mt-4 active:scale-[0.96] transition-transform duration-150" disabled={starting} onClick={() => { if (!streaming && !starting && !atLimit) void runTurn("", true); }}>{starting ? "Starting…" : "Start building your framework"}</Button>
+            <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+              <h2 className="font-display text-xl font-semibold tracking-tight">First, set the voice and audience</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">The Creative Director pulls your framework out in the voice of one Attractive Character, for one Customer Avatar. Pick all three to begin; the interview will sound like you.</p>
+              <div className="mt-5"><SetupFields setup={setup} onChange={onSetupChange} /></div>
+              <Button size="lg" className="mt-5 w-full active:scale-[0.98] transition-transform duration-150" disabled={starting || !setupComplete(setup)} onClick={() => { if (!streaming && !starting && !atLimit) void runTurn("", true); }}>{starting ? "Starting…" : "Start building your framework"}</Button>
+              {!setupComplete(setup) && <p className="mt-2 text-center text-xs text-muted-foreground">Select all three to continue.</p>}
             </div>
           ))}
           {visible.map((m) => {
@@ -210,8 +216,8 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
             </div>
           ) : (
             <form onSubmit={submit} className="flex items-end gap-2 rounded-3xl border border-border bg-card px-4 py-2.5 shadow-sm focus-within:border-foreground/30">
-              <textarea ref={inputRef} value={input} rows={1} disabled={streaming || starting} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(e); } }}
-                placeholder={started ? "Type your answer…" : "Answer here to begin, or tap Start above…"} aria-label="Type a message"
+              <textarea ref={inputRef} value={input} rows={1} disabled={streaming || starting || (!started && !setupComplete(setup))} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(e); } }}
+                placeholder={started ? "Type your answer…" : setupComplete(setup) ? "Answer here to begin, or tap Start above…" : "Pick the voice and audience above to begin"} aria-label="Type a message"
                 className="max-h-[220px] min-h-[28px] flex-1 resize-none bg-transparent py-1 text-[15px] leading-7 placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
                 onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 220)}px`; }} />
               {streaming ? (

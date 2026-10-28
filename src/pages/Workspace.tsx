@@ -9,13 +9,14 @@
  * unmount); there is no Save button and no Library button.
  *
  * LEFT — the Creative Director chat, one centred column max-width 750px,
- * ChatGPT style: setup bar (three selects: Attractive Character, Voice,
- * Customer Avatar), the thread (assistant = plain markdown text, no avatar,
+ * ChatGPT style: the thread (assistant = plain markdown text, no avatar,
  * no bubble; user = right-aligned muted bubble), a rounded pill composer
  * (auto-growing textarea, round Send button that becomes Stop while
  * streaming), and a quiet meter line "N / 300 messages" + "3 credits per
- * reply". A brand-new project shows a start card ("Set the voice and audience,
- * then start" + "Start building your framework"). Each reply streams; the
+ * reply". A brand-new project shows a setup card instead of the thread: three
+ * selects (Attractive Character, Voice, Customer Avatar) and "Start building
+ * your framework", enabled only once all three are picked; there is no setup
+ * bar after that. Each reply streams; the
  * trailing <fe-state> JSON patch is stripped from the visible text and merged
  * into project state (src/lib/framework/protocol.ts) so the right pane fills
  * in live. "Generated {Component} for "{Step}"." first lines render as a pill
@@ -46,7 +47,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { FrameworkChat, type FrameworkChatHandle } from "@/components/framework/FrameworkChat";
 import { FrameworkTab } from "@/components/framework/FrameworkTab";
 import { TeachingPlanTab } from "@/components/framework/TeachingPlanTab";
-import { SetupBar } from "@/components/framework/SetupBar";
 import { buildFrameworkBriefMarkdown, slugify } from "@/lib/framework/brief";
 import { getProject, updateProject } from "@/lib/framework/storage";
 import { applyFeStatePatches, FE_REGENERATE_CREDITS, isInterviewStarted, normalizeTeaching, phase1Complete, reconcileTeachingSteps, type FeStatePatch } from "@/lib/framework/protocol";
@@ -237,9 +237,8 @@ export default function Workspace() {
       <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
         <ResizablePanel ref={chatPanel} defaultSize={100} minSize={30} collapsible collapsedSize={0} className={animating ? "panel-animate" : undefined}>
         <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-          <SetupBar setup={project.setup} onChange={patchSetup} />
           <div className="flex min-h-0 flex-1 flex-col">
-            <FrameworkChat ref={chatRef} state={state} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
+            <FrameworkChat ref={chatRef} state={state} setup={project.setup} onSetupChange={patchSetup} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
               onMessagesChange={(next) => patchState((s) => ({ ...s, chat_messages: next }))} onStatePatch={handleStatePatch} onStreamingChange={handleStreamingChange} />
           </div>
         </section>

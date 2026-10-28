@@ -30,7 +30,7 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     }
     case "origin":
       return (
-        <blockquote className="border-l-2 border-primary pl-4">
+        <blockquote className="border-l-2 border-border pl-4">
           <EditableText value={framework.origin_story ?? ""} ariaLabel="Origin story" placeholder="The origin story" onChange={(v) => onChange({ origin_story: v })} />
         </blockquote>
       );
@@ -53,7 +53,7 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
         <ol className="space-y-2">
           {named.map((s, i) => (
             <li key={i} className="flex items-start gap-3 rounded-lg bg-muted/40 px-3 py-2.5">
-              <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-semibold tabular-nums text-primary">{i + 1}</span>
+              <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border bg-background text-xs font-semibold tabular-nums text-muted-foreground">{i + 1}</span>
               <span className="min-w-0 flex-1">
                 <EditableText value={s.to} ariaLabel={`Name for step ${i + 1}`} placeholder="Step name" className="-ml-2 text-[15px] font-semibold" onChange={(v) => onChange({ named_steps: named.map((x, j) => (j === i ? { ...x, to: v } : x)) })} />
                 <span className="block text-xs leading-relaxed text-muted-foreground">{s.from}</span>
@@ -65,7 +65,7 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     }
     case "naming_framework":
       return (
-        <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6">
+        <div className="rounded-2xl border border-border bg-gradient-to-br from-muted/70 to-background p-6">
           <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="-ml-2 font-display text-3xl font-bold leading-tight tracking-tight" onChange={(v) => onChange({ framework_name: v })} />
           <EditableText value={framework.framework_tagline ?? ""} ariaLabel="Framework tagline" placeholder="Add a one-line tagline (optional)" className="-ml-2 text-sm text-muted-foreground" onChange={(v) => onChange({ framework_tagline: v })} />
         </div>
