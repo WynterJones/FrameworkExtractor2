@@ -67,7 +67,6 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
 
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs text-muted-foreground tabular-nums">Step {i + 1} of {steps.length}</p>
           <h3 className="font-display text-xl font-semibold tracking-tight">{step.name || `Step ${i + 1}`}</h3>
         </div>
         <div className="flex shrink-0 items-center gap-1">
