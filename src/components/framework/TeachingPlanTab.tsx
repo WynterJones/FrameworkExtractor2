@@ -95,10 +95,7 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
               {t || editingBlank === blankKey ? (
                 <EditableText value={step[k] ?? ""} ariaLabel={`${meta.title} for ${step.name}`} placeholder={meta.sub} autoFocus={!t} onChange={(v) => onComponentChange(i, k, v)} />
               ) : autoFilling ? (
-                <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground [animation-delay:150ms]" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground [animation-delay:300ms]" />
-                  Generating…
-                </p>
+                <p className="text-sm"><span className="text-shimmer">Generating…</span></p>
               ) : (
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">{status === "active" ? "Filling in from the conversation, or use Generate above." : meta.sub}</p>

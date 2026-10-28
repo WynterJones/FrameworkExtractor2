@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Check, RefreshCw, Send, Sparkles, Square, Zap } from "lucide-react";
+import { Check, RefreshCw, Send, Square, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "./Markdown";
 import { fakeStream } from "@/lib/mock/ai";
@@ -41,11 +41,15 @@ function splitGenLine(content: string) {
 
 function GenCard({ generating, label }: { generating: boolean; label: string }) {
   return (
-    <div className="inline-flex items-center gap-2.5 rounded-full border border-border px-3.5 py-1.5 text-sm">
-      {generating ? <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" /> : <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} />}
-      <span className="font-medium">{label}</span>
-      <span className="text-muted-foreground">{generating ? "working…" : "added to the plan"}</span>
-    </div>
+    generating ? (
+      <p className="text-[15px]"><span className="text-shimmer">{label}</span></p>
+    ) : (
+      <div className="inline-flex items-center gap-2.5 rounded-full border border-border px-3.5 py-1.5 text-sm">
+        <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} />
+        <span className="font-medium">{label}</span>
+        <span className="text-muted-foreground">added to the plan</span>
+      </div>
+    )
   );
 }
 
@@ -160,7 +164,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
       <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
         <div className="mx-auto flex w-full max-w-[750px] flex-col gap-6 px-5 py-6">
           {visible.length === 0 && !streaming && (started ? (
-            <p className="text-[15px] text-muted-foreground">Getting your Creative Director ready…</p>
+            <p className="text-[15px]"><span className="text-shimmer">Getting your Creative Director ready…</span></p>
           ) : (
             <div className="rounded-2xl border border-border p-5">
               <strong className="text-[15px] font-semibold">Set the voice and audience, then start</strong>
@@ -180,7 +184,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
               </div>
             );
             const { gen, rest } = splitGenLine(m.content);
-            if (m.streaming && (!m.content.trim() || gen)) return <GenCard key={m.id} generating label="Generating…" />;
+            if (m.streaming && (!m.content.trim() || gen)) return <GenCard key={m.id} generating label={gen ? "Writing it into the plan…" : "Thinking…"} />;
             return (
               <div key={m.id} className="space-y-3">
                 {gen && <GenCard generating={false} label={gen} />}
