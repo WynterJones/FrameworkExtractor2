@@ -33,7 +33,7 @@ export default function Shell() {
     setPendingDelete(null);
   };
 
-  const item = "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors";
+  const item = "group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors";
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className={`flex shrink-0 flex-col border-r border-border bg-card transition-[width] duration-300 ${collapsed ? "w-14" : "w-64"}`}>
@@ -64,7 +64,7 @@ export default function Shell() {
               <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-border text-[10px] font-semibold tabular-nums">{(p.state.framework.named_steps?.length || p.state.framework.raw_steps?.length || 0) || "·"}</span>
               {!collapsed && <span className="min-w-0 flex-1 truncate">{p.title}</span>}
               {!collapsed && (
-                <button type="button" aria-label={`Delete ${p.title}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPendingDelete(p); }} className="hidden h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:text-destructive group-hover:grid">
+                <button type="button" aria-label={`Delete ${p.title}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPendingDelete(p); }} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
