@@ -218,8 +218,8 @@ export default function Workspace() {
         )}
         <ResizablePanel defaultSize={50} minSize={30}>
         <section aria-label="Framework output" className="flex h-full min-h-0 flex-col bg-card">
-          <header className="flex shrink-0 items-stretch justify-between gap-3 border-b border-border px-6">
-            <div role="tablist" className="flex gap-6">
+          <header className="relative flex shrink-0 items-stretch justify-center gap-3 border-b border-border px-6">
+            <div role="tablist" className="flex gap-8">
               {(["framework", "teaching"] as const).map((t) => (
                 <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`relative inline-flex items-center gap-2 py-3.5 text-sm transition-colors ${tab === t ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                   <span className={`h-2 w-2 rounded-full ${tabDot(state, t)}`} aria-hidden />{t === "framework" ? "Framework" : "Teaching plan"}
@@ -227,7 +227,7 @@ export default function Workspace() {
                 </button>
               ))}
             </div>
-            <Button variant="ghost" size="icon" className="my-auto h-8 w-8 text-muted-foreground" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
+            <Button variant="ghost" size="icon" className="absolute right-3 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground" aria-pressed={outputExpanded} onClick={() => setOutputExpanded((v) => !v)} title={outputExpanded ? "Show the chat" : "Hide the chat and widen the output"}>
               {outputExpanded ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
             </Button>
           </header>
