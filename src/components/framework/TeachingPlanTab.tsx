@@ -50,18 +50,18 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
 
   return (
     <>
-      <ol className="mb-6 flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
+      <ol className="mb-6 inline-flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
         {steps.map((s, n) => {
           const done = TEACHING_COMPONENT_KEYS.every((k) => s.components[k] === "done");
           const doneCount = TEACHING_COMPONENT_KEYS.filter((k) => s.components[k] === "done").length;
           const active = n === i;
           return (
             <li key={n} className="flex-none">
-              <button type="button" onClick={() => pick(n)} aria-current={active ? "step" : undefined} className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors active:scale-[0.98] ${active ? "bg-muted" : "hover:bg-muted/50"}`}>
+              <button type="button" onClick={() => pick(n)} aria-current={active ? "step" : undefined} title={s.name} className={`flex items-center gap-2 rounded-lg px-3 py-1.5 transition-colors active:scale-[0.98] ${active ? "bg-muted" : "hover:bg-muted/50"}`}>
                 <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums ${done ? "bg-emerald-500 text-white" : active ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>{done ? <Check className="h-3 w-3" strokeWidth={3} /> : n + 1}</span>
-                <span className="min-w-0">
-                  <span className={`block whitespace-nowrap text-sm ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{s.name || `Step ${n + 1}`}</span>
-                  <span className="block text-[11px] tabular-nums text-muted-foreground">{doneCount}/4</span>
+                <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+                  <span className={`text-sm ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>Step {n + 1}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground">{doneCount}/4</span>
                 </span>
               </button>
             </li>

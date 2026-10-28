@@ -50,24 +50,25 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     case "naming_steps": {
       const named = framework.named_steps ?? [];
       return (
-        <ul className="space-y-1">
+        <ol className="space-y-2">
           {named.map((s, i) => (
-            <li key={i} className="grid items-center gap-2 text-sm sm:grid-cols-[1fr_auto_1fr]">
-              <span className="text-muted-foreground">{s.from}</span>
-              <span className="hidden text-muted-foreground sm:inline" aria-hidden>→</span>
+            <li key={i} className="flex items-start gap-3 rounded-lg bg-muted/40 px-3 py-2.5">
+              <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-semibold tabular-nums text-primary">{i + 1}</span>
               <span className="min-w-0 flex-1">
-                <EditableText value={s.to} ariaLabel={`Name for step ${i + 1}`} placeholder="Step name" className="font-semibold" onChange={(v) => onChange({ named_steps: named.map((x, j) => (j === i ? { ...x, to: v } : x)) })} />
+                <EditableText value={s.to} ariaLabel={`Name for step ${i + 1}`} placeholder="Step name" className="-ml-2 text-[15px] font-semibold" onChange={(v) => onChange({ named_steps: named.map((x, j) => (j === i ? { ...x, to: v } : x)) })} />
+                <span className="block text-xs leading-relaxed text-muted-foreground">{s.from}</span>
               </span>
             </li>
           ))}
-        </ul>
+        </ol>
       );
     }
     case "naming_framework":
       return (
-        <div className="rounded-2xl bg-primary px-5 py-5 text-center text-primary-foreground">
-          <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="text-center font-display text-2xl font-bold leading-tight tracking-tight text-primary-foreground hover:bg-white/15 focus:bg-white/20 placeholder:text-primary-foreground/60" onChange={(v) => onChange({ framework_name: v })} />
-          <EditableText value={framework.framework_tagline ?? ""} ariaLabel="Framework tagline" placeholder="Add a one-line tagline (optional)" className="text-center text-sm text-primary-foreground/85 hover:bg-white/15 focus:bg-white/20 placeholder:text-primary-foreground/60" onChange={(v) => onChange({ framework_tagline: v })} />
+        <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-6">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">Framework name</span>
+          <EditableText value={framework.framework_name ?? ""} ariaLabel="Framework name" placeholder="Framework name" className="-ml-2 mt-1 font-display text-3xl font-bold leading-tight tracking-tight" onChange={(v) => onChange({ framework_name: v })} />
+          <EditableText value={framework.framework_tagline ?? ""} ariaLabel="Framework tagline" placeholder="Add a one-line tagline (optional)" className="-ml-2 text-sm text-muted-foreground" onChange={(v) => onChange({ framework_tagline: v })} />
         </div>
       );
   }
