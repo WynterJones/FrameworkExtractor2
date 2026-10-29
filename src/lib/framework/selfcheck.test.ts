@@ -52,3 +52,13 @@ test("exports derive from the project: slides and printable html", () => {
   assert.ok(html.startsWith("<!doctype html>") && html.includes("<h2>The framework</h2>"));
   assert.ok(!html.includes("<script"), "printable page carries no script");
 });
+
+test("the turn that completes the last teaching component also assembles the scale variants", () => {
+  let state = replayInterview(["Agencies", "The founder", "A 4 day week", "March 2022, a waiting room", "Audit every hour, cut the clients, write the playbook", "yes", "yes", "Momentum", "1"]);
+  assert.equal(state.phase, 2);
+  for (const s of state.teaching.steps) {
+    const reply = creativeDirectorTurn(state, `For the framework step "${s.name}", draft all four teaching components yourself — Story, Strategy, Tactics, and Case Study. Write each one straight into the teaching plan on the right. Use your best judgement from everything we have covered; I will review and tweak after.`);
+    state = applyFeStatePatches(state, extractFeStatePatches(reply));
+  }
+  assert.ok(state.teaching.scale_variants?.multi_day, "variants written in the same turn as the last step");
+});

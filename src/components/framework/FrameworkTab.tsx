@@ -118,7 +118,7 @@ export function FrameworkTab({ framework, setup, onChange }: { framework: Framew
         const status = framework.stages[key];
         const has = frameworkStageHasData(key, framework);
         return (
-          <li key={key} className={`py-6 first:pt-2 ${status === "pending" ? "opacity-50" : ""}`}>
+          <li key={key} className={`py-6 first:pt-2 ${status === "pending" ? "opacity-50" : status === "active" ? "my-2 -mx-4 rounded-xl bg-primary/[0.06] px-4 ring-1 ring-primary/20 sm:-mx-5 sm:px-5 first:pt-6" : ""}`}>
             <header className="mb-3 flex items-center gap-3">
               <StepNum n={meta.num} />
               <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>

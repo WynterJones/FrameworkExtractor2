@@ -6,7 +6,7 @@
  * Copy button, then the next-step actions (export the brief). Until the
  * teaching plan is complete the cards stay but read as locked.
  */
-import { ArrowRight, Check, Copy, Download, Lock } from "lucide-react";
+import { ArrowRight, Check, Copy, Download, Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SCALE_VARIANT_ROWS, clean } from "@/lib/framework/brief";
@@ -21,7 +21,7 @@ const CHANNELS: Record<keyof ScaleVariants, { use: string; where: string[] }> = 
   multi_day: { use: "Programs", where: ["Courses and cohorts", "Coaching curriculum", "Books and certifications"] },
 };
 
-export function UseTab({ framework, teaching, onExport }: { framework: FrameworkData; teaching: TeachingData; onExport: () => void }) {
+export function UseTab({ framework, teaching, busy, onExport, onAssemble }: { framework: FrameworkData; teaching: TeachingData; busy?: boolean; onExport: () => void; onAssemble: () => void }) {
   const steps = teaching.steps ?? [];
   const componentsDone = steps.length > 0 && steps.every((s) => (["story", "strategy", "tactics", "case_study"] as const).every((k) => s.components[k] === "done"));
   const variants = teaching.scale_variants ?? {};
@@ -53,6 +53,12 @@ export function UseTab({ framework, teaching, onExport }: { framework: Framework
       <section>
         <h4 className="font-display text-[15px] font-semibold">Where it goes</h4>
         <p className="mt-1 text-sm text-muted-foreground">Every scale variant is the same framework at a different length. Pick the length that matches the channel and paste it in.</p>
+        {componentsDone && !variantsDone && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-3">
+            <p className="text-sm">Every step is done. Have the Creative Director assemble the five variants from what you captured.</p>
+            <Button size="sm" className="h-9" disabled={busy} onClick={onAssemble}><Sparkles className="h-4 w-4" /> Write the scale variants</Button>
+          </div>
+        )}
         <ol className="mt-4 divide-y divide-border rounded-xl border border-border/60 bg-background/40">
           {SCALE_VARIANT_ROWS.map((r) => {
             const text = clean(variants[r.key]);
@@ -65,7 +71,7 @@ export function UseTab({ framework, teaching, onExport }: { framework: Framework
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">{ch.where.join(" · ")}</p>
-                  {text ? <p className="mt-1.5 line-clamp-3 text-sm">{text}</p> : <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Lock className="h-3 w-3" /> Written once the teaching plan is done.</p>}
+                  {text ? <p className="mt-1.5 line-clamp-3 text-sm">{text}</p> : <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Lock className="h-3 w-3" /> {componentsDone ? "Not written yet." : "Written once the teaching plan is done."}</p>}
                 </div>
                 <Button variant="ghost" size="sm" className="h-8 self-start text-muted-foreground" disabled={!text} onClick={() => void copy(r.label, text)}><Copy className="h-3.5 w-3.5" /> Copy</Button>
               </li>

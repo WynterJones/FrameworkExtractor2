@@ -103,6 +103,13 @@ function scaleVariants(state: FrameworkProjectState): ScaleVariants {
   };
 }
 
+/** The scale variants if `update` completes the last open component, else nothing. Lets the turn that finishes the plan assemble them too. */
+function variantsIfComplete(state: FrameworkProjectState, update: Partial<TeachingStep> & { step: number }): { scale_variants: ScaleVariants } | Record<string, never> {
+  const steps = state.teaching.steps.map((s, i) => (i === update.step - 1 ? { ...s, ...update } : s));
+  const done = steps.length > 0 && steps.every((s) => TEACHING_COMPONENT_KEYS.every((k) => (s[k] ?? "").trim()));
+  return done && !state.teaching.scale_variants?.sixty_second ? { scale_variants: scaleVariants({ ...state, teaching: { ...state.teaching, steps } }) } : {};
+}
+
 function phase1Turn(state: FrameworkProjectState, text: string | null): string {
   const f = state.framework;
   if (!f.anchor) {
@@ -162,8 +169,11 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
     const idx = steps.findIndex((s) => s.name.toLowerCase() === auto[1].toLowerCase());
     const step = steps[idx === -1 ? t.current_step - 1 : idx];
     const num = steps.indexOf(step) + 1;
-    return `**Generated the full teaching for "${step.name}".**\n\nI drafted all four components from everything we have covered. Read them on the right, tweak anything that is not in your voice, and tell me when you are ready for the next step.` +
-      block({ teaching: { current_step: num, step_updates: [{ step: num, name: step.name, story: step.story || draftStory(step, anchor), strategy: step.strategy || proposeStrategy(step, anchor), tactics: step.tactics || draftTactics(step), case_study: step.case_study || draftCaseStudy(step, anchor) }] } });
+    const update = { step: num, name: step.name, story: step.story || draftStory(step, anchor), strategy: step.strategy || proposeStrategy(step, anchor), tactics: step.tactics || draftTactics(step), case_study: step.case_study || draftCaseStudy(step, anchor) };
+    const extra = variantsIfComplete(state, update);
+    const tail = "scale_variants" in extra ? "That completes every step, so I also assembled the five scale variants (60-second through multi-day); see the Use it tab." : "Read them on the right, tweak anything that is not in your voice, and tell me when you are ready for the next step.";
+    return `**Generated the full teaching for "${step.name}".**\n\nI drafted all four components from everything we have covered. ${tail}` +
+      block({ teaching: { current_step: num, step_updates: [update], ...extra } });
   }
 
   const idx = steps.findIndex((s) => TEACHING_COMPONENT_KEYS.some((k) => !(s[k] ?? "").trim()));
@@ -182,7 +192,7 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
     if (k === "strategy") return `Now the **Tactics** for ${s.name}. Walk me through the actual execution: what is the very first thing they do, then what, what tools, and what goes wrong most often?`;
     if (k === "tactics") return `Last piece for ${s.name}: a **Case Study**. Who has done this step successfully, you, a client, or someone external? What did it look like before and after?`;
     const after = steps[n];
-    return after ? `Got Step ${n} locked in. Moving to Step ${n + 1}, **${after.name}**. ${STORY_Q(after.name)}` : `Got Step ${n} locked in. That was the last step. Say "assemble" and I will generate the scale variants.`;
+    return after ? `Got Step ${n} locked in. Moving to Step ${n + 1}, **${after.name}**. ${STORY_Q(after.name)}` : `Got Step ${n} locked in. That was the last step, so I assembled the five scale variants (60-second through multi-day) from everything we captured; see the Use it tab.`;
   };
 
   if (text === null) {
@@ -207,7 +217,8 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
     ? `Based on that, here is what I think the underlying **Strategy** is:\n\n${proposeStrategy(step, anchor)}\n\nDoes that capture it, or is the deeper why something else?`
     : next(key, step, num);
   const nextStep = key === "case_study" && steps[num] ? num + 1 : num;
-  return `${lead}\n\n${follow}` + block({ teaching: { current_step: nextStep, step_updates: [{ step: num, name: step.name, [key]: value }] } });
+  const update = { step: num, name: step.name, [key]: value };
+  return `${lead}\n\n${follow}` + block({ teaching: { current_step: nextStep, step_updates: [update], ...variantsIfComplete(state, update) } });
 }
 
 /** One Creative Director turn. `text === null` is the free kickoff greeting. */

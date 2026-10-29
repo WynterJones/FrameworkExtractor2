@@ -88,7 +88,7 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
           const t = text(step, k);
           const blankKey = `${i}:${k}`;
           return (
-            <section key={k} className={`py-5 ${status === "pending" && !t ? "opacity-60" : ""}`}>
+            <section key={k} className={`py-5 ${status === "pending" && !t ? "opacity-60" : status === "active" ? "my-2 -mx-4 rounded-xl bg-primary/[0.06] px-4 ring-1 ring-primary/20 sm:-mx-5 sm:px-5" : ""}`}>
               <header className="mb-2 flex items-center gap-3">
                 <StepNum n={meta.num} />
                 <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>
