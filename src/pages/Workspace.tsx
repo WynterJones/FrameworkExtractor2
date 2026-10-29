@@ -265,7 +265,7 @@ export default function Workspace() {
             <div className="mx-auto w-full max-w-[750px]">
               {tab === "framework" ? <FrameworkTab framework={state.framework} setup={project.setup} onChange={handleFrameworkChange} /> : tab === "teaching" ? (
                 <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} />
-              ) : tab === "use" ? <UseTab framework={state.framework} teaching={state.teaching} busy={chatStreaming} onExport={() => { tabTouched.current = true; setTab("export"); }} onAssemble={() => chatRef.current?.send("Assemble the five scale variants from everything we captured.")} /> : <ExportPanel project={project} />}
+              ) : tab === "use" ? <UseTab framework={state.framework} teaching={state.teaching} onExport={() => { tabTouched.current = true; setTab("export"); }} /> : <ExportPanel project={project} />}
             </div>
           </div>
           <footer className="flex shrink-0 items-center gap-3 border-t border-border px-5 py-2.5 ">

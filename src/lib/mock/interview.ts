@@ -171,7 +171,7 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
     const num = steps.indexOf(step) + 1;
     const update = { step: num, name: step.name, story: step.story || draftStory(step, anchor), strategy: step.strategy || proposeStrategy(step, anchor), tactics: step.tactics || draftTactics(step), case_study: step.case_study || draftCaseStudy(step, anchor) };
     const extra = variantsIfComplete(state, update);
-    const tail = "scale_variants" in extra ? "That completes every step, so I also assembled the five scale variants (60-second through multi-day); see the Use it tab." : "Read them on the right, tweak anything that is not in your voice, and tell me when you are ready for the next step.";
+    const tail = "scale_variants" in extra ? "That completes every step, so I also assembled the five scale variants (60-second through multi-day); they are in the brief." : "Read them on the right, tweak anything that is not in your voice, and tell me when you are ready for the next step.";
     return `**Generated the full teaching for "${step.name}".**\n\nI drafted all four components from everything we have covered. ${tail}` +
       block({ teaching: { current_step: num, step_updates: [update], ...extra } });
   }
@@ -192,7 +192,7 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
     if (k === "strategy") return `Now the **Tactics** for ${s.name}. Walk me through the actual execution: what is the very first thing they do, then what, what tools, and what goes wrong most often?`;
     if (k === "tactics") return `Last piece for ${s.name}: a **Case Study**. Who has done this step successfully, you, a client, or someone external? What did it look like before and after?`;
     const after = steps[n];
-    return after ? `Got Step ${n} locked in. Moving to Step ${n + 1}, **${after.name}**. ${STORY_Q(after.name)}` : `Got Step ${n} locked in. That was the last step, so I assembled the five scale variants (60-second through multi-day) from everything we captured; see the Use it tab.`;
+    return after ? `Got Step ${n} locked in. Moving to Step ${n + 1}, **${after.name}**. ${STORY_Q(after.name)}` : `Got Step ${n} locked in. That was the last step, so I assembled the five scale variants (60-second through multi-day) from everything we captured; they are in the brief.`;
   };
 
   if (text === null) {
