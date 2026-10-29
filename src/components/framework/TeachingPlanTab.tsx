@@ -65,9 +65,10 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
         })}
       </ol>
 
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="font-display text-xl font-semibold tracking-tight">{step.name || `Step ${i + 1}`}</h3>
+      <div className="mb-1 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Step {i + 1} of {steps.length}</p>
+          <h3 className="font-display text-xl font-semibold tracking-tight"><span className="text-muted-foreground">Teaching</span> {step.name || `Step ${i + 1}`}</h3>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onRemoveStep(i)} aria-label={`Remove ${step.name}`} title={`Remove ${step.name}`}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -78,6 +79,7 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
           )}
         </div>
       </div>
+      <p className="mb-5 max-w-[60ch] text-sm leading-relaxed text-muted-foreground">Four components per framework step. Walk through them one at a time, or let the Creative Director draft them.</p>
 
       <div className="divide-y divide-border">
         {TEACHING_COMPONENT_KEYS.map((k) => {
