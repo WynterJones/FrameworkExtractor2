@@ -2,7 +2,7 @@
  * SCREEN: / — Dashboard. One job: start a framework.
  *
  * Centred composer card under a short headline: h1 "Pull the framework out
- * of your head.", one short line, and a three-step strip (Answer a few
+ * of your head." and a three-step strip (Answer a few
  * questions · Watch it build · Export and teach). The card holds the three
  * selects (Attractive Character, Voice, Customer Avatar; pre-filled from the
  * most recent project), a large primary CTA "Start" (disabled until all three
@@ -43,7 +43,6 @@ export default function Index() {
         <div className="pointer-events-none absolute left-1/2 top-0 h-96 w-[48rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/15 blur-3xl" aria-hidden />
         <div className="relative flex w-full max-w-2xl flex-col items-center gap-4 text-center">
           <h1 className="font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl">Pull the framework out of your head.</h1>
-          <p className="max-w-md text-base text-muted-foreground sm:text-lg">Turn what you know into a named, step-by-step framework.</p>
           <ol className="mt-1 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-muted-foreground sm:text-sm">
             {["Answer questions", "Watch it build", "Export and teach"].map((t, i) => (
               <li key={t} className="flex items-center gap-2"><span className="grid h-5 w-5 place-items-center rounded-full border border-border text-[10px] font-semibold">{i + 1}</span>{t}</li>

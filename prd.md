@@ -16,7 +16,7 @@ The app uses the dynamic viewport height so phone browser bars never clip the co
 
 ### 2.1 `/` — Dashboard
 
-Centred on the page, under a soft primary glow: h1 "Pull the framework out of your head."; one line "Turn what you know into a named, step-by-step framework."; a small three-step strip with numbered circles: 1 Answer questions · 2 Watch it build · 3 Export and teach. No eyebrow pill, no long paragraph: the page is written for a beginner.
+Centred on the page, under a soft primary glow: h1 "Pull the framework out of your head."; a small three-step strip with numbered circles: 1 Answer questions · 2 Watch it build · 3 Export and teach. No eyebrow pill, no subheadline: the page is written for a beginner.
 
 Below it the composer card (max 672px, rounded, soft shadow): three selects in a row, Attractive Character, Voice (disabled until a character is picked; changing the character clears the voice), Customer Avatar, pre-filled from the user's most recent project; a full-width primary CTA "Start →" ("Creating…" while busy), disabled until all three are picked; a note "About 45 minutes." (or "Pick all three to start." while incomplete). Then, under a divider, a centred row: the label "Or start from an example:" and four rounded chips showing only the template name (the blurb is the chip's tooltip): "The 4-day agency" (Get a founder out of client delivery.), "The 7-day course launch" (Sell seats from a small email list.), "Patient reactivation" (Fill a clinic from its own inactive list.), "The one-call close" (Close high-ticket offers on the first call." Templates are disabled until the three picks are made.
 
