@@ -1,8 +1,9 @@
-import { Compass } from "lucide-react";
+import { AudioLines, Compass, Target, User } from "lucide-react";
+import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import { EditableText } from "./EditableText";
 import { StatusPill, StepNum } from "./StatusPill";
 import { frameworkStageHasData } from "@/lib/framework/protocol";
-import { FRAMEWORK_STAGE_KEYS, type FrameworkAnchor, type FrameworkData, type FrameworkStageKey } from "@/lib/framework/contract";
+import { FRAMEWORK_STAGE_KEYS, type FrameworkAnchor, type FrameworkData, type FrameworkSetup, type FrameworkStageKey } from "@/lib/framework/contract";
 
 const STAGE_META: Record<FrameworkStageKey, { num: number; title: string; sub: string }> = {
   anchor: { num: 1, title: "Anchor", sub: "Confirm niche, dream customer, and the single result." },
@@ -30,9 +31,7 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
     }
     case "origin":
       return (
-        <blockquote className="border-l-2 border-border pl-4">
-          <EditableText value={framework.origin_story ?? ""} ariaLabel="Origin story" placeholder="The origin story" onChange={(v) => onChange({ origin_story: v })} />
-        </blockquote>
+        <EditableText value={framework.origin_story ?? ""} ariaLabel="Origin story" placeholder="The origin story" onChange={(v) => onChange({ origin_story: v })} />
       );
     case "hypothesis": {
       const steps = framework.raw_steps ?? [];
@@ -73,7 +72,33 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
   }
 }
 
-export function FrameworkTab({ framework, onChange }: { framework: FrameworkData; onChange: (p: Partial<FrameworkData>) => void }) {
+/** The connected Attractive Character, Voice and Customer Avatar the framework is written as and for. */
+function SetupStrip({ setup }: { setup: FrameworkSetup }) {
+  const c = CHARACTERS.find((x) => x.id === setup.character_id);
+  const v = VOICES.find((x) => x.id === setup.voice_id);
+  const a = AVATARS.find((x) => x.id === setup.customer_avatar_id);
+  const cells: { Icon: typeof User; label: string; name?: string; sub?: string }[] = [
+    { Icon: User, label: "Attractive Character", name: c?.name, sub: c?.tagline },
+    { Icon: AudioLines, label: "Voice", name: v?.name, sub: c ? `${c.name}'s voice` : undefined },
+    { Icon: Target, label: "Customer Avatar", name: a?.name, sub: a?.tagline },
+  ];
+  return (
+    <div className="mb-6 grid gap-px overflow-hidden rounded-xl border border-border/60 bg-border/60 sm:grid-cols-3">
+      {cells.map(({ Icon, label, name, sub }) => (
+        <div key={label} className="flex items-start gap-3 bg-background/40 px-4 py-3">
+          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Icon className="h-3.5 w-3.5" /></span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="truncate text-sm font-semibold">{name ?? <span className="font-normal text-muted-foreground">Not set</span>}</p>
+            {sub && <p className="truncate text-xs text-muted-foreground">{sub}</p>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function FrameworkTab({ framework, setup, onChange }: { framework: FrameworkData; setup: FrameworkSetup; onChange: (p: Partial<FrameworkData>) => void }) {
   const empty = FRAMEWORK_STAGE_KEYS.every((k) => !frameworkStageHasData(k, framework));
   if (empty) {
     return (
@@ -85,6 +110,8 @@ export function FrameworkTab({ framework, onChange }: { framework: FrameworkData
     );
   }
   return (
+    <>
+    <SetupStrip setup={setup} />
     <ol className="divide-y divide-border">
       {FRAMEWORK_STAGE_KEYS.map((key) => {
         const meta = STAGE_META[key];
@@ -104,6 +131,7 @@ export function FrameworkTab({ framework, onChange }: { framework: FrameworkData
         );
       })}
     </ol>
+    </>
   );
 }
 export default FrameworkTab;

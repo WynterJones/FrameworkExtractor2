@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { applyFeStatePatches, extractFeStatePatches, stripFeState } from "./protocol.ts";
 import { initialFrameworkState } from "./contract.ts";
 import { creativeDirectorTurn, replayInterview } from "../mock/interview.ts";
+import { buildBriefHtml, buildSlides } from "./export.ts";
 
 test("fe-state blocks parse, strip, and merge", () => {
   const raw = 'Locked.\n\n<fe-state>\n{"framework":{"anchor":{"niche":"a","dream_customer":"b","single_result":"c"}}}\n</fe-state>';
@@ -39,4 +40,15 @@ test("scripted interview walks Phase 1 into Phase 2 and replays deterministicall
   const after = applyFeStatePatches(state, extractFeStatePatches(reply));
   assert.ok(reply.startsWith('**Generated the full teaching for "Send 20 Texts".**'));
   assert.equal(after.teaching.steps[2].components.case_study, "done");
+});
+
+test("exports derive from the project: slides and printable html", () => {
+  const state = replayInterview(["Agencies", "The founder", "A 4 day week", "March 2022, a waiting room", "Audit every hour, cut the clients, write the playbook", "yes", "yes", "Momentum", "1"]);
+  const p = { id: "x", title: "Momentum", source: "ai-interview" as const, setup: {}, state, archived: false, created_at: "", updated_at: "" };
+  const slides = buildSlides(p);
+  assert.equal(slides[0].kicker, "Framework Brief");
+  assert.ok(slides.some((s) => s.bullets && s.bullets.length >= 3), "agenda slide lists the steps");
+  const html = buildBriefHtml(p);
+  assert.ok(html.startsWith("<!doctype html>") && html.includes("<h2>The framework</h2>"));
+  assert.ok(!html.includes("<script"), "printable page carries no script");
 });

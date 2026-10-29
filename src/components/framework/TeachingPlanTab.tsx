@@ -50,7 +50,7 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
 
   return (
     <>
-      <ol className="mx-auto mb-6 flex w-fit flex-wrap justify-center gap-1 rounded-xl border border-border/60 bg-background/40 p-1">
+      <ol className="mb-6 flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-border/60 bg-background/40 p-1">
         {steps.map((s, n) => {
           const done = TEACHING_COMPONENT_KEYS.every((k) => s.components[k] === "done");
           const active = n === i;
