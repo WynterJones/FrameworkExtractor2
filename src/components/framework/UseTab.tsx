@@ -1,34 +1,24 @@
 /**
- * "Use it" tab: the asset hub. A readiness line (name, steps, teaching), then
- * one card per output — Social posts, Email sequence, Webinar, Workshop,
+ * "Use it" tab: the asset hub. One card per output — Social posts, Email sequence, Webinar, Workshop,
  * Course — each saying what it creates. "Preview brief" opens the hand-off
  * brief (framework id, steps, teaching, voice, avatar, proof status), editable
  * before copying. "Create with MarketingSecretsAI" is not wired yet, so it is
  * shown disabled and labelled Coming soon: nothing pretends to generate.
  */
 import { useState } from "react";
-import { ArrowRight, Check, Copy, GraduationCap, Mail, Megaphone, MonitorPlay, Users } from "lucide-react";
+import { ArrowRight, Copy, GraduationCap, Mail, Megaphone, MonitorPlay, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { clean } from "@/lib/framework/brief";
 import { ASSETS, buildAssetBrief, type AssetKind } from "@/lib/framework/export";
-import { phase1Complete } from "@/lib/framework/protocol";
-import { teachingDone } from "@/lib/framework/status";
 import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import type { FrameworkProject } from "@/types";
 
 const ICON: Record<AssetKind, typeof Mail> = { social: Megaphone, email: Mail, webinar: MonitorPlay, workshop: Users, course: GraduationCap };
 
 export function UseTab({ project, onExport }: { project: FrameworkProject; onExport: () => void }) {
-  const { framework, teaching } = project.state;
   const [open, setOpen] = useState<AssetKind | null>(null);
   const [draft, setDraft] = useState("");
-  const checks = [
-    { label: "Framework named", done: Boolean(clean(framework.framework_name)) },
-    { label: `${teaching.steps.length || "3–7"} steps named`, done: phase1Complete(framework) },
-    { label: "Teaching written for every step", done: teachingDone(project.state) },
-  ];
   const ctx = {
     character: CHARACTERS.find((c) => c.id === project.setup.character_id)?.name,
     voice: VOICES.find((v) => v.id === project.setup.voice_id)?.name,
@@ -42,17 +32,7 @@ export function UseTab({ project, onExport }: { project: FrameworkProject; onExp
 
   return (
     <div className="space-y-7 pt-2">
-      <section>
-        <h3 className="font-display text-xl font-semibold tracking-tight">Create from this framework</h3>
-        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
-          {checks.map((c) => (
-            <li key={c.label} className="flex items-center gap-2 text-sm">
-              <span className={`grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full ${c.done ? "bg-emerald-500 text-white" : "border border-border text-muted-foreground"}`}>{c.done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}</span>
-              <span className={c.done ? "" : "text-muted-foreground"}>{c.label}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <h3 className="font-display text-xl font-semibold tracking-tight">Create from this framework</h3>
 
       <ul className="grid gap-3 sm:grid-cols-2">
         {ASSETS.map((a) => {

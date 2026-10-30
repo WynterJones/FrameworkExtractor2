@@ -1,8 +1,7 @@
 /**
  * Framework Extractor — routes. Every page renders inside Shell (a collapsible
- * left sidebar: New framework, Home, Settings).
- *   /                → Index      (Home: continue card + every framework, empty state)
- *   /settings        → Settings   (Brain connection)
+ * left sidebar: New framework, Home, the frameworks).
+ *   /                → Index      (Home: start a framework, continue the latest)
  *   /framework/:id   → Workspace  (interview + live framework; ?tab= picks the output tab)
  *   any route ?new=1 → the new-framework dialog (Shell)
  *   *                → NotFound
@@ -17,7 +16,6 @@ import Shell from "@/components/Shell";
 import Index from "@/pages/Index";
 import Workspace from "@/pages/Workspace";
 import NotFound from "@/pages/NotFound";
-import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -32,7 +30,6 @@ export default function App() {
             <Routes>
               <Route element={<Shell />}>
                 <Route path="/" element={<Index />} />
-                <Route path="/settings" element={<Settings />} />
                 <Route path="/framework/:id" element={<Workspace />} />
               </Route>
               <Route path="*" element={<NotFound />} />

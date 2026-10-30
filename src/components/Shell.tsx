@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from "react-router-dom";
-import { Compass, Home, Menu, PanelLeftClose, PanelLeftOpen, Plus, Settings, X } from "lucide-react";
+import { Compass, Home, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BrainStatus } from "@/components/BrainStatus";
 import { NewFrameworkDialog } from "@/components/framework/NewFrameworkDialog";
+import { displayTitle, FrameworkMenu, useProjects } from "@/components/framework/Library";
+import { stepNames } from "@/lib/framework/brief";
+import { libraryStatus } from "@/lib/framework/status";
+import type { FrameworkProject } from "@/lib/framework/contract";
 import "@/lib/mock/data";
 
 /**
  * Framework Extractor's own shell: a collapsible left sidebar (brand,
- * + New framework, Home; Settings, the quiet Brain
- * status and the account at the bottom) beside the routed page. Nothing from
+ * + New framework, Home, then every framework (newest first, a "…" menu
+ * each, archived ones behind a toggle); the quiet Brain status and the
+ * account at the bottom) beside the routed page. Nothing from
  * the MarketingSecretsAI host appears here. `?new=1` on any route opens the
  * new-framework dialog (examples live inside it). Under 768px the sidebar
  * is an off-canvas drawer opened from a top bar.
@@ -26,6 +31,11 @@ export default function Shell() {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
   useEffect(() => { try { localStorage.setItem("fe:sidebar", collapsedPref ? "collapsed" : "open"); } catch { /* ignore */ } }, [collapsedPref]);
 
+  const projects = useProjects() ?? [];
+  const [showArchived, setShowArchived] = useState(false);
+  const archivedCount = projects.filter((p) => p.archived).length;
+  // Older rows store archived: null.
+  const listed = projects.filter((p) => Boolean(p.archived) === showArchived);
   const closeNew = () => setSearch((s) => { s.delete("new"); return s; });
 
   const item = `group relative flex h-9 items-center rounded-lg text-sm transition-colors ${collapsed ? "w-9 justify-center" : "gap-2.5 px-2.5"}`;
@@ -40,6 +50,21 @@ export default function Shell() {
       </Tooltip>
     ) : children;
   const nav: [string, string, typeof Home][] = [["/", "Home", Home]];
+  /** One framework: a chip (step count, else the initial; emerald when Ready), the title, a "…" menu on hover. */
+  const FrameworkRow = ({ p }: { p: FrameworkProject }) => {
+    const n = stepNames(p).length;
+    const ready = libraryStatus(p.state) === "Ready";
+    const title = displayTitle(p);
+    return (
+      <Tip label={title}>
+        <NavLink to={`/framework/${p.id}`} className={({ isActive }) => `${item} ${isActive ? active : idle}`}>
+          <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md text-[10px] font-semibold tabular-nums ${ready ? "bg-emerald-500/15 text-emerald-400" : "bg-muted/80 text-muted-foreground"}`}>{n || title.trim().charAt(0).toUpperCase()}</span>
+          {!collapsed && <span className="min-w-0 flex-1 truncate">{title}</span>}
+          {!collapsed && <FrameworkMenu p={p} className="shrink-0 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100" />}
+        </NavLink>
+      </Tip>
+    );
+  };
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background md:flex-row">
       {/* Phone top bar: menu + brand. The sidebar slides in over the page. */}
@@ -85,12 +110,16 @@ export default function Shell() {
               </NavLink>
             </Tip>
           ))}
+
+          {!collapsed && listed.length > 0 && <p className="mt-4 px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{showArchived ? "Archived" : "Frameworks"}</p>}
+          {collapsed && listed.length > 0 && <span className="my-2 h-px w-6 bg-border" aria-hidden />}
+          {listed.map((p) => <FrameworkRow key={p.id} p={p} />)}
+          {!collapsed && archivedCount > 0 && (
+            <button type="button" onClick={() => setShowArchived((v) => !v)} className="mt-1 px-2.5 py-1 text-left text-xs text-muted-foreground hover:text-foreground">{showArchived ? "← Back to frameworks" : `Archived (${archivedCount})`}</button>
+          )}
         </nav>
 
         <div className={`flex shrink-0 flex-col gap-1 p-2 ${collapsed ? "items-center" : ""}`}>
-          <Tip label="Settings">
-            <NavLink to="/settings" className={({ isActive }) => `${item} ${isActive ? active : idle}`}><Settings className="h-4 w-4 shrink-0" />{!collapsed && "Settings"}</NavLink>
-          </Tip>
           {!collapsed && <BrainStatus side="top" align="start" className="self-start" />}
         </div>
         <div className={`shrink-0 border-t border-black/40 bg-gradient-to-t from-black/35 to-transparent p-3 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)] ${collapsed ? "flex justify-center" : "flex items-center gap-2.5"}`}>

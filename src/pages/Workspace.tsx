@@ -25,10 +25,10 @@
  * with a green check; a phase: 2 patch inserts a "Framework locked" divider
  * and switches the right pane to the Teaching plan.
  *
- * RIGHT — underline tabs "Framework" / "Teaching plan" (status dot each), a
- * ghost button that hides the chat, the output (centred, max 750px), and a
- * footer "20 credits" + ghost "Regenerate" (confirm dialog, then re-derive the
- * framework + teaching plan from the transcript). Framework tab: five stage
+ * RIGHT — tabs Framework / Teaching plan / Use it / Export and the output
+ * (centred, max 750px). "Regenerate everything…" lives in the header "…" menu
+ * (with Rename, Duplicate, Archive, Delete): confirm, then re-derive the
+ * framework + teaching plan from the transcript. Framework tab: five stage
  * sections (Anchor, Origin Story, Hypothesis, Naming The Steps, Naming The
  * Framework) with status badges, every captured field inline-editable.
  * Teaching plan tab: "Step N" stepper, the step name as heading, a trash icon
@@ -60,6 +60,9 @@ import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import { ExportPanel } from "@/components/framework/ExportPanel";
 import { UseTab } from "@/components/framework/UseTab";
 import { BrainStatus } from "@/components/BrainStatus";
+import { FrameworkMenu } from "@/components/framework/Library";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { onEntityChange } from "@/lib/mock/entities";
 import { STAGES, stageIndex } from "@/lib/framework/status";
 import { blankTeachingStep, FRAMEWORK_STAGE_KEYS, isProofKey, isProvisionalTitle, type Evidence, type ProofKey, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
 
@@ -142,6 +145,12 @@ export default function Workspace() {
   }, [schedule]);
   const patchState = useCallback((f: (s: FrameworkProjectState) => FrameworkProjectState) => patchProject((p) => ({ ...p, state: f(p.state) })), [patchProject]);
   const patchSetup = (patch: Partial<FrameworkSetup>) => patchProject((p) => ({ ...p, setup: { ...p.setup, ...patch } }));
+
+  // A rename or archive from the sidebar menu: take the new title unless the user is mid-edit here.
+  useEffect(() => onEntityChange((n) => {
+    if (n !== "framework_project" || "title" in dirty.current) return;
+    void getProject(id).then((fresh) => { if (fresh) setProject((cur) => (cur && cur.title !== fresh.title ? { ...cur, title: fresh.title } : cur)); });
+  }), [id]);
 
   // Adopt the Creative Director's framework name as the title once, if the user never typed one.
   useEffect(() => {
@@ -278,6 +287,7 @@ export default function Workspace() {
               {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> <span className="hidden sm:inline">Saving…</span></> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> <span className="hidden sm:inline">Save failed ·</span> <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> <span className="hidden sm:inline">Saved</span></> : null}
             </span>
             <BrainStatus className="hidden sm:inline-flex" />
+            {regenerating && <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Regenerating…</span>}
             <div role="group" aria-label="Layout" className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
               {([["chat", MessageSquare, "Chat only"], ["split", Columns2, "Chat and output"], ["output", PanelRight, "Output only"]] as const).filter(([v]) => !(isMobile && v === "split")).map(([v, Icon, label]) => (
                 <button key={v} type="button" aria-pressed={effectiveView === v} title={label} aria-label={label} onClick={() => { viewTouched.current = true; setView(v); }} className={`grid h-7 w-8 place-items-center rounded-md transition-colors ${effectiveView === v ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
@@ -285,6 +295,10 @@ export default function Workspace() {
                 </button>
               ))}
             </div>
+            <FrameworkMenu p={project} className="h-8 w-8">
+              <DropdownMenuItem disabled={regenerating || chatStreaming} onSelect={() => setRegenOpen(true)}><RefreshCw className="h-3.5 w-3.5" /> Regenerate everything…</DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </FrameworkMenu>
           </div>
         </div>
       </header>
@@ -319,9 +333,6 @@ export default function Workspace() {
               ) : tab === "use" ? <UseTab project={project} onExport={() => setTab("export")} /> : <ExportPanel project={project} />}
             </div>
           </div>
-          <footer className="flex shrink-0 items-center gap-3 border-t border-border px-5 py-2.5 ">
-            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate everything…</Button>
-          </footer>
         </section>        </ResizablePanel>
       </PanelGroup>
 

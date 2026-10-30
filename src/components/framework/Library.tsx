@@ -1,6 +1,6 @@
-/** The framework library pieces used by Home: the live project list, cards with an overflow menu, the resume card. */
+/** Framework list pieces: the live project list, display helpers, the per-framework menu (sidebar), the resume card (Home). */
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Archive, ArchiveRestore, ArrowRight, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { onEntityChange } from "@/lib/mock/entities";
 import { deleteProject, duplicateProject, listProjects, updateProject } from "@/lib/framework/storage";
-import { libraryStatus, progress, STAGES, stageIndex, type LibraryStatus } from "@/lib/framework/status";
-import { clean, stepNames } from "@/lib/framework/brief";
+import { progress, STAGES, stageIndex } from "@/lib/framework/status";
+import { clean } from "@/lib/framework/brief";
 import { DEFAULT_FRAMEWORK_TITLE, provisionalTitle, type FrameworkProject } from "@/lib/framework/contract";
 
 export function useProjects() {
@@ -25,26 +25,20 @@ export function useProjects() {
   return projects;
 }
 
-export const displayTitle = (p: FrameworkProject) => clean(p.state.framework.framework_name) || (p.title.trim() === DEFAULT_FRAMEWORK_TITLE ? provisionalTitle(new Date(p.created_at)) : p.title);
+/** The title is the name (the workspace adopts the framework name into it once); legacy "Untitled Framework" reads as a dated provisional name. */
+export const displayTitle = (p: FrameworkProject) => (p.title.trim() === DEFAULT_FRAMEWORK_TITLE ? provisionalTitle(new Date(p.created_at)) : p.title.trim() || provisionalTitle(new Date(p.created_at)));
 export const promise = (p: FrameworkProject) => clean(p.state.framework.framework_tagline) || clean(p.state.framework.anchor?.single_result) || "Just started. The interview will shape the promise.";
 const updated = (p: FrameworkProject) => `Updated ${formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}`;
-
-const STATUS_CLS: Record<LibraryStatus, string> = {
-  Discovering: "bg-muted text-muted-foreground",
-  "Needs review": "bg-amber-500/15 text-amber-400",
-  "Teaching in progress": "bg-primary/15 text-primary",
-  Ready: "bg-emerald-500/15 text-emerald-400",
-};
-export function StatusBadge({ status }: { status: LibraryStatus }) {
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_CLS[status]}`}>{status}</span>;
-}
 
 function Progress({ value }: { value: number }) {
   return <div className="h-1 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${value}%` }} /></div>;
 }
 
-function CardMenu({ p }: { p: FrameworkProject }) {
+/** Rename / Duplicate / Archive / Delete for one framework. Deleting or archiving the open one returns Home. */
+export function FrameworkMenu({ p, className = "", children }: { p: FrameworkProject; className?: string; children?: React.ReactNode }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const leaveIfOpen = () => { if (pathname === `/framework/${p.id}`) navigate("/"); };
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(p.title);
   const [deleting, setDeleting] = useState(false);
@@ -52,11 +46,12 @@ function CardMenu({ p }: { p: FrameworkProject }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger onClick={stop} aria-label={`Actions for ${displayTitle(p)}`} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
+        <DropdownMenuTrigger onClick={stop} aria-label={`Actions for ${displayTitle(p)}`} className={`grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground ${className}`}><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          {children}
           <DropdownMenuItem onSelect={() => { setName(displayTitle(p)); setRenaming(true); }}><Pencil className="h-3.5 w-3.5" /> Rename</DropdownMenuItem>
           <DropdownMenuItem onSelect={async () => { const c = await duplicateProject(p); toast.success("Duplicated", { action: { label: "Open", onClick: () => navigate(`/framework/${c.id}`) } }); }}><Copy className="h-3.5 w-3.5" /> Duplicate</DropdownMenuItem>
-          <DropdownMenuItem onSelect={async () => { await updateProject(p.id, { archived: !p.archived }); toast(p.archived ? "Restored" : "Archived"); }}>{p.archived ? <><ArchiveRestore className="h-3.5 w-3.5" /> Restore</> : <><Archive className="h-3.5 w-3.5" /> Archive</>}</DropdownMenuItem>
+          <DropdownMenuItem onSelect={async () => { await updateProject(p.id, { archived: !p.archived }); if (!p.archived) leaveIfOpen(); toast(p.archived ? "Restored" : "Archived"); }}>{p.archived ? <><ArchiveRestore className="h-3.5 w-3.5" /> Restore</> : <><Archive className="h-3.5 w-3.5" /> Archive</>}</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleting(true)}><Trash2 className="h-3.5 w-3.5" /> Delete</DropdownMenuItem>
         </DropdownMenuContent>
@@ -64,7 +59,7 @@ function CardMenu({ p }: { p: FrameworkProject }) {
       <Dialog open={renaming} onOpenChange={setRenaming}>
         <DialogContent className="max-w-sm" onClick={(e) => e.stopPropagation()}>
           <DialogHeader><DialogTitle>Rename framework</DialogTitle></DialogHeader>
-          <form onSubmit={async (e) => { e.preventDefault(); if (!name.trim()) return; await updateProject(p.id, { title: name.trim(), state: { ...p.state, framework: { ...p.state.framework, framework_name: p.state.framework.framework_name ? name.trim() : p.state.framework.framework_name } } }); setRenaming(false); }}>
+          <form onSubmit={async (e) => { e.preventDefault(); if (!name.trim()) return; await updateProject(p.id, { title: name.trim() }); setRenaming(false); }}>
             <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus aria-label="Framework name" />
             <DialogFooter className="mt-4"><Button type="button" variant="ghost" onClick={() => setRenaming(false)}>Cancel</Button><Button type="submit" disabled={!name.trim()}>Save</Button></DialogFooter>
           </form>
@@ -78,30 +73,11 @@ function CardMenu({ p }: { p: FrameworkProject }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void deleteProject(p.id)}>Delete</AlertDialogAction>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { leaveIfOpen(); void deleteProject(p.id); }}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-export function FrameworkCard({ p }: { p: FrameworkProject }) {
-  const steps = stepNames(p).length;
-  const pct = progress(p.state);
-  return (
-    <Link to={`/framework/${p.id}`} className={`group flex flex-col rounded-2xl border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 ${p.archived ? "opacity-60" : ""}`}>
-      <div className="flex items-center justify-between gap-2">
-        <StatusBadge status={libraryStatus(p.state)} />
-        <CardMenu p={p} />
-      </div>
-      <h3 className="mt-3 line-clamp-2 font-display text-[15px] font-semibold leading-snug">{displayTitle(p)}</h3>
-      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{promise(p)}</p>
-      <div className="mt-auto pt-4">
-        <Progress value={pct} />
-        <p className="mt-2 flex justify-between gap-2 text-xs text-muted-foreground"><span>{steps ? `${steps} steps` : "No steps yet"}{p.archived ? " · Archived" : ""}</span><span className="truncate">{updated(p)}</span></p>
-      </div>
-    </Link>
   );
 }
 

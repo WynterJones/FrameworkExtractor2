@@ -18,9 +18,12 @@ export function BrainStatus({ side = "bottom", align = "end", className = "" }: 
         <p className="font-medium">{connected ? `Connected to ${BRAIN_PROVIDER}` : `${BRAIN_PROVIDER} Brain unavailable`}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{connected ? "Context provided by your Brain. Synced just now." : "The interview still works. You pick the character, voice and avatar yourself."}</p>
         {connected ? (
-          <ul className="mt-3 space-y-1 text-xs">
-            {BRAIN_CATEGORIES.map((c) => <li key={c} className="flex items-center gap-2 text-muted-foreground"><Check className="h-3 w-3 text-emerald-500" />{c}</li>)}
-          </ul>
+          <>
+            <ul className="mt-3 space-y-1 text-xs">
+              {BRAIN_CATEGORIES.map((c) => <li key={c} className="flex items-center gap-2 text-muted-foreground"><Check className="h-3 w-3 text-emerald-500" />{c}</li>)}
+            </ul>
+            <p className="mt-3 border-t border-border pt-2 text-xs text-muted-foreground">Read only: nothing is written back. <button type="button" className="underline hover:text-foreground" onClick={() => setBrainConnected(false)}>Disconnect</button></p>
+          </>
         ) : (
           <div className="mt-3 flex gap-2">
             <Button size="sm" className="h-8" onClick={() => setBrainConnected(true)}>Reconnect</Button>
