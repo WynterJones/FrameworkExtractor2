@@ -22,6 +22,7 @@
 import {
   blankTeachingStep,
   FRAMEWORK_STAGE_KEYS,
+  isProofKey,
   TEACHING_COMPONENT_KEYS,
   type FrameworkData,
   type FrameworkProjectState,
@@ -190,7 +191,7 @@ function applyStepUpdates(steps: TeachingStep[], updates: TeachingStepUpdate[]):
     for (const k of TEACHING_COMPONENT_KEYS) {
       const val = u[k];
       if (typeof val === "string" && val.trim()) {
-        if (val !== target[k]) target.verified = target.verified?.filter((v) => v !== k);
+        if (val !== target[k] && target.evidence && isProofKey(k)) target.evidence = { ...target.evidence, [k]: undefined };
         target[k] = val;
       }
     }

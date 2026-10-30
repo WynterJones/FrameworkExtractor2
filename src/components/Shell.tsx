@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from "react-router-dom";
-import { BookOpen, Compass, Home, Library, Menu, PanelLeftClose, PanelLeftOpen, Plus, Settings, X } from "lucide-react";
+import { Compass, Home, Menu, PanelLeftClose, PanelLeftOpen, Plus, Settings, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BrainStatus } from "@/components/BrainStatus";
@@ -9,10 +9,10 @@ import "@/lib/mock/data";
 
 /**
  * Framework Extractor's own shell: a collapsible left sidebar (brand,
- * + New framework, Home, My Frameworks, Examples; Settings, the quiet Brain
+ * + New framework, Home; Settings, the quiet Brain
  * status and the account at the bottom) beside the routed page. Nothing from
  * the MarketingSecretsAI host appears here. `?new=1` on any route opens the
- * new-framework dialog (`&example=<id>` prefills it). Under 768px the sidebar
+ * new-framework dialog (examples live inside it). Under 768px the sidebar
  * is an off-canvas drawer opened from a top bar.
  */
 export default function Shell() {
@@ -26,7 +26,7 @@ export default function Shell() {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
   useEffect(() => { try { localStorage.setItem("fe:sidebar", collapsedPref ? "collapsed" : "open"); } catch { /* ignore */ } }, [collapsedPref]);
 
-  const closeNew = () => setSearch((s) => { s.delete("new"); s.delete("example"); return s; });
+  const closeNew = () => setSearch((s) => { s.delete("new"); return s; });
 
   const item = `group relative flex h-9 items-center rounded-lg text-sm transition-colors ${collapsed ? "w-9 justify-center" : "gap-2.5 px-2.5"}`;
   const active = "bg-muted/70 font-medium text-foreground";
@@ -39,7 +39,7 @@ export default function Shell() {
         <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
       </Tooltip>
     ) : children;
-  const nav: [string, string, typeof Home][] = [["/", "Home", Home], ["/frameworks", "My Frameworks", Library], ["/examples", "Examples", BookOpen]];
+  const nav: [string, string, typeof Home][] = [["/", "Home", Home]];
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background md:flex-row">
       {/* Phone top bar: menu + brand. The sidebar slides in over the page. */}
@@ -103,7 +103,7 @@ export default function Shell() {
         <Outlet />
       </main>
 
-      <NewFrameworkDialog open={search.has("new")} exampleId={search.get("example")} onClose={closeNew} />
+      <NewFrameworkDialog open={search.has("new")} onClose={closeNew} />
     </div>
   );
 }

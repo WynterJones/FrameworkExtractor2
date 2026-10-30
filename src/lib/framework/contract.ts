@@ -35,6 +35,8 @@ export interface ChatMessage {
   created_at: string;
   /** The in-thread Phase 1 → Phase 2 divider card. */
   phase_divider?: boolean;
+  /** A milestone summary card: the index (into STAGES) of the stage just completed. `content` is the summary line. */
+  milestone?: number;
 }
 
 /** Who the framework is extracted for, in whose voice. Picked in the setup bar. */
@@ -96,8 +98,18 @@ export interface TeachingStep {
   tactics?: string | null;
   case_study?: string | null;
   components: Record<TeachingComponentKey, StageStatus>;
-  /** Components the user confirmed as real. Anything else is an AI draft; any change to the text drops it again. */
-  verified?: TeachingComponentKey[] | null;
+  /** The user's answer to "did this really happen?" for the two factual components. Any change to the text clears it. */
+  evidence?: Partial<Record<ProofKey, Evidence>> | null;
+}
+
+/** Story and case study are factual claims; strategy and tactics are not. */
+export type ProofKey = "story" | "case_study";
+export const PROOF_KEYS: readonly ProofKey[] = ["story", "case_study"] as const;
+export type Evidence = "verified" | "illustrative" | "needs_proof";
+export const isProofKey = (k: TeachingComponentKey): k is ProofKey => k === "story" || k === "case_study";
+/** A drafted case study labels itself illustrative; otherwise the user's answer, or nothing yet. */
+export function evidenceOf(step: TeachingStep, k: ProofKey): Evidence | undefined {
+  return step.evidence?.[k] ?? ((step[k] ?? "").trim().startsWith("Illustrative example") ? "illustrative" : undefined);
 }
 
 export interface ScaleVariants {

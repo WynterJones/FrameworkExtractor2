@@ -61,7 +61,7 @@ import { ExportPanel } from "@/components/framework/ExportPanel";
 import { UseTab } from "@/components/framework/UseTab";
 import { BrainStatus } from "@/components/BrainStatus";
 import { STAGES, stageIndex } from "@/lib/framework/status";
-import { blankTeachingStep, FRAMEWORK_STAGE_KEYS, isProvisionalTitle, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
+import { blankTeachingStep, FRAMEWORK_STAGE_KEYS, isProofKey, isProvisionalTitle, type Evidence, type ProofKey, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
 
 type Tab = "framework" | "teaching" | "use" | "export";
 const TAB_LABEL: Record<Tab, string> = { framework: "Framework", teaching: "Teaching plan", use: "Use it", export: "Export" };
@@ -100,6 +100,7 @@ export default function Workspace() {
   const [autoFillStep, setAutoFillStep] = useState<number | null>(null);
   const [regenOpen, setRegenOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const chatRef = useRef<FrameworkChatHandle>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -183,8 +184,8 @@ export default function Workspace() {
   }));
   const patchStep = (i: number, f: (st: TeachingStep) => TeachingStep) => patchState((s) => ({ ...s, teaching: normalizeTeaching({ ...s.teaching, steps: s.teaching.steps.map((st, j) => (j === i ? f(st) : st)) }) }));
   // An edit is new, unconfirmed text: it drops that component's verification.
-  const handleComponentChange = (i: number, k: TeachingComponentKey, v: string) => patchStep(i, (st) => ({ ...st, [k]: v, verified: st.verified?.filter((x) => x !== k) }));
-  const handleVerify = (i: number, k: TeachingComponentKey, on: boolean) => patchStep(i, (st) => ({ ...st, verified: on ? [...(st.verified ?? []).filter((x) => x !== k), k] : st.verified?.filter((x) => x !== k) }));
+  const handleComponentChange = (i: number, k: TeachingComponentKey, v: string) => patchStep(i, (st) => ({ ...st, [k]: v, evidence: st.evidence && isProofKey(k) ? { ...st.evidence, [k]: undefined } : st.evidence }));
+  const handleEvidence = (i: number, k: ProofKey, e: Evidence | null) => patchStep(i, (st) => ({ ...st, evidence: { ...st.evidence, [k]: e ?? undefined } }));
   const handleRewrite = (i: number, label: string, mode: RewriteMode) => { setAutoFillStep(i); chatRef.current?.send(rewriteMessage(label, project?.state.teaching.steps[i]?.name || `Step ${i + 1}`, mode)); };
   /** Reorder or add framework steps, keeping raw steps, names and teaching aligned. */
   const handleStepOp = (op: { move: number; dir: -1 | 1 } | { add: true }) => patchState((s) => {
@@ -213,6 +214,20 @@ export default function Workspace() {
     character: (() => { const c = CHARACTERS.find((x) => x.id === project.setup.character_id); const v = VOICES.find((x) => x.id === project.setup.voice_id); return c ? { name: c.name, tagline: c.tagline, style_sheet: v?.style_sheet } : null; })(),
     avatar: AVATARS.find((x) => x.id === project.setup.customer_avatar_id) ?? null,
   }) : "";
+
+  /** Edit answer: drop that message and everything after it, rebuild the plan from the answers before it, and put the text back in the composer. */
+  const handleEditAnswer = () => {
+    const msgs = project?.state.chat_messages ?? [];
+    const i = msgs.findIndex((m) => m.id === editId);
+    setEditId(null);
+    if (i < 0) return;
+    const kept = msgs.slice(0, i);
+    const rebuilt = replayInterview(kept.filter((m) => m.role === "user").map((m) => m.content));
+    patchState((s) => ({ ...s, phase: rebuilt.phase, framework: rebuilt.framework, teaching: rebuilt.teaching, chat_messages: kept }));
+    if (rebuilt.phase === 1) setTab("framework", true);
+    chatRef.current?.prefill(msgs[i].content);
+  };
+  const openTab = (t: Tab) => { setTab(t); if (view === "chat") { viewTouched.current = true; setView("split"); } };
 
   const handleRegenerate = async () => {
     if (!project) return;
@@ -279,7 +294,8 @@ export default function Workspace() {
         <section aria-label="Creative Director chat" className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
           <div className="flex min-h-0 flex-1 flex-col">
             <FrameworkChat ref={chatRef} state={state} setup={project.setup} onSetupChange={patchSetup} voiceBlock={voiceBlock} firstAnswer={handoff.firstAnswer} started={started} onStart={async () => { await flushSave(); setStarted(true); patchProject((p) => (p.source === "empty" ? { ...p, source: "ai-interview" } : p)); }}
-              onMessagesChange={(next) => patchState((s) => ({ ...s, chat_messages: next }))} onStatePatch={handleStatePatch} onStreamingChange={handleStreamingChange} />
+              onMessagesChange={(next) => patchState((s) => ({ ...s, chat_messages: next }))} onStatePatch={handleStatePatch} onStreamingChange={handleStreamingChange}
+              onEvidence={(i, k, e) => handleEvidence(i, k, e)} onAddStep={() => handleStepOp({ add: true })} onEditMessage={setEditId} onReview={openTab} />
           </div>
         </section>
         </ResizablePanel>
@@ -299,7 +315,7 @@ export default function Workspace() {
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
             <div className="mx-auto w-full max-w-[750px]">
               {tab === "framework" ? <FrameworkTab framework={state.framework} setup={project.setup} onChange={handleFrameworkChange} onStepOp={handleStepOp} onRemoveStep={handleRemoveStep} /> : tab === "teaching" ? (
-                <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} onVerify={handleVerify} onRewrite={handleRewrite} />
+                <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} onEvidence={handleEvidence} onRewrite={handleRewrite} />
               ) : tab === "use" ? <UseTab project={project} onExport={() => setTab("export")} /> : <ExportPanel project={project} />}
             </div>
           </div>
@@ -308,6 +324,19 @@ export default function Workspace() {
           </footer>
         </section>        </ResizablePanel>
       </PanelGroup>
+
+      <AlertDialog open={!!editId} onOpenChange={(o) => { if (!o) setEditId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit this answer?</AlertDialogTitle>
+            <AlertDialogDescription>The conversation goes back to just before this answer and your text returns to the message box. The framework is rebuilt from your answers up to that point, so anything after it, including edits typed on the right, is replaced.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEditAnswer}><Pencil className="h-3.5 w-3.5" /> Edit answer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={regenOpen} onOpenChange={setRegenOpen}>
         <AlertDialogContent>

@@ -1,4 +1,4 @@
-/** The framework library pieces shared by Home and My Frameworks: the live project list, cards with an overflow menu, the resume card. */
+/** The framework library pieces used by Home: the live project list, cards with an overflow menu, the resume card. */
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";

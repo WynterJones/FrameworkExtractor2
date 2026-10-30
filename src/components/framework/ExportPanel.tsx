@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { buildFrameworkBriefMarkdown } from "@/lib/framework/brief";
 import { buildBriefHtml, buildSlides, downloadMarkdown, downloadPptx, exportFileName, scoped, SCOPES, type ExportScope } from "@/lib/framework/export";
 import type { FrameworkProject } from "@/types";
+import { evidenceOf } from "@/lib/framework/contract";
 
 type Format = "markdown" | "pdf" | "pptx";
 
@@ -37,7 +38,7 @@ export function ExportPanel({ project }: { project: FrameworkProject }) {
   const slides = useMemo(() => buildSlides(p), [p]);
   const current = FORMATS.find((f) => f.id === format)!;
   const file = exportFileName(project, scope, current.ext.slice(1));
-  const unconfirmed = scope === "framework" ? [] : p.state.teaching.steps.filter((s) => (s.case_study ?? "").trim() && !s.verified?.includes("case_study"));
+  const unconfirmed = scope === "framework" ? [] : p.state.teaching.steps.filter((s) => (s.case_study ?? "").trim() && evidenceOf(s, "case_study") !== "verified");
 
   const download = async () => {
     setStatus({ kind: "working", msg: `Building ${file}…` });

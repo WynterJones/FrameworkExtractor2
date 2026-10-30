@@ -1,9 +1,7 @@
 /**
  * Framework Extractor — routes. Every page renders inside Shell (a collapsible
- * left sidebar: New framework, Home, My Frameworks, Examples, Settings).
- *   /                → Index      (Home: continue card, recent frameworks, empty state)
- *   /frameworks      → Frameworks (library: search, filter, sort, archive)
- *   /examples        → Examples   (curated starting points)
+ * left sidebar: New framework, Home, Settings).
+ *   /                → Index      (Home: continue card + every framework, empty state)
  *   /settings        → Settings   (Brain connection)
  *   /framework/:id   → Workspace  (interview + live framework; ?tab= picks the output tab)
  *   any route ?new=1 → the new-framework dialog (Shell)
@@ -19,8 +17,6 @@ import Shell from "@/components/Shell";
 import Index from "@/pages/Index";
 import Workspace from "@/pages/Workspace";
 import NotFound from "@/pages/NotFound";
-import Frameworks from "@/pages/Frameworks";
-import Examples from "@/pages/Examples";
 import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient({
@@ -36,8 +32,6 @@ export default function App() {
             <Routes>
               <Route element={<Shell />}>
                 <Route path="/" element={<Index />} />
-                <Route path="/frameworks" element={<Frameworks />} />
-                <Route path="/examples" element={<Examples />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/framework/:id" element={<Workspace />} />
               </Route>

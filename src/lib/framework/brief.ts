@@ -1,5 +1,5 @@
 /** Serialise a project to the downloadable Framework Brief (markdown). Pure; mirrors production. */
-import type { FrameworkProject, ScaleVariants, TeachingStep } from "./contract.ts";
+import { evidenceOf, type FrameworkProject, type ScaleVariants, type TeachingStep } from "./contract.ts";
 
 export const clean = (v: string | null | undefined) => (v ?? "").trim();
 
@@ -22,7 +22,7 @@ export const SCALE_VARIANT_ROWS: { key: keyof ScaleVariants; label: string }[] =
 ];
 
 /** An unconfirmed case study is never exported as fact. */
-export const caseStudyLabel = (step: TeachingStep) => (step.verified?.includes("case_study") ? "Case Study" : "Case Study (illustrative example, not yet confirmed)");
+export const caseStudyLabel = (step: TeachingStep) => (evidenceOf(step, "case_study") === "verified" ? "Case Study" : "Case Study (illustrative example, not yet confirmed)");
 
 function stepMd(step: TeachingStep, i: number): string {
   const sec = (label: string, v: string | null | undefined) => `### ${label}\n\n${clean(v) || "_Not captured yet._"}\n`;

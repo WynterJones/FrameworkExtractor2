@@ -4,7 +4,7 @@
  * (PDF preview + print-to-PDF) and the slide list (deck preview + .pptx).
  */
 import { SCALE_VARIANT_ROWS, buildFrameworkBriefMarkdown, caseStudyLabel, clean, frameworkName, slugify, stepNames } from "./brief.ts";
-import type { FrameworkProject } from "./contract.ts";
+import { evidenceOf, type FrameworkProject } from "./contract.ts";
 
 export type ExportScope = "framework" | "teaching" | "complete";
 export const SCOPES: { id: ExportScope; label: string; blurb: string }[] = [
@@ -141,7 +141,7 @@ export function buildAssetBrief(p: FrameworkProject, kind: AssetKind, ctx: { cha
   const steps = p.state.teaching.steps;
   const names = stepNames(p);
   const deep = kind === "workshop" || kind === "course";
-  const unconfirmed = steps.filter((s) => clean(s.case_study) && !s.verified?.includes("case_study")).map((s) => s.name);
+  const unconfirmed = steps.filter((s) => clean(s.case_study) && evidenceOf(s, "case_study") !== "verified").map((s) => s.name);
   return [
     `Create: ${a.title} (${a.length})`,
     `What it should be: ${a.creates}`,

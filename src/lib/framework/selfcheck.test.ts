@@ -74,12 +74,25 @@ test("statuses, the I-help anchor, scoped rewrites and proof labels", async () =
   const done = replayInterview(["a; b; c", "One Tuesday I texted 20 people by hand and nine booked.", "Export; Write; Send; Track", "yes", "2", 'For the framework step "Export", draft all four']);
   assert.equal(libraryStatus(done), "Teaching in progress");
   assert.equal(stageIndex(done), 3);
-  const step = { ...done.teaching.steps[0], verified: ["case_study" as const] };
+  const step = { ...done.teaching.steps[0], evidence: { case_study: "verified" as const } };
   s = { ...done, teaching: { ...done.teaching, steps: [step, ...done.teaching.steps.slice(1)] } };
   const md = buildFrameworkBriefMarkdown({ id: "x", title: "T", source: "empty", setup: {}, state: s, archived: false, created_at: "", updated_at: "" });
   assert.ok(md.includes("### Case Study\n"));
   // A rewrite is new text: verification on that component is dropped.
   s = applyFeStatePatches(s, extractFeStatePatches(creativeDirectorTurn(s, rewriteMessage("Case Study", step.name, "shorter"))));
-  assert.ok(!s.teaching.steps[0].verified?.includes("case_study"));
+  assert.equal(s.teaching.steps[0].evidence?.case_study, undefined);
   assert.ok(unverified(s).some((u) => u.key === "case_study"));
+});
+
+test("evidence check, milestone summary and working labels", async () => {
+  const { pendingEvidence, milestoneSummary } = await import("./status.ts");
+  const { workingLabel, autoFillMessage } = await import("../mock/interview.ts");
+  const turns = ["a; b; c", "One Tuesday I texted 20 people by hand and nine booked.", "Export; Write; Send; Track", "yes", "2", "In March 2023 Dana, a clinic owner, booked 40 visits."];
+  const s = replayInterview(turns);
+  assert.deepEqual(pendingEvidence(s)?.key, "story");
+  const answered = { ...s, teaching: { ...s.teaching, steps: s.teaching.steps.map((st, i) => (i === 0 ? { ...st, evidence: { story: "illustrative" as const } } : st)) } };
+  assert.equal(pendingEvidence(answered), null);
+  assert.match(milestoneSummary(s, 1), /^4 steps: /);
+  assert.equal(workingLabel(s, autoFillMessage("Send")), "Drafting all four for Send…");
+  assert.match(workingLabel(s, "anything"), /^Writing strategy for /);
 });

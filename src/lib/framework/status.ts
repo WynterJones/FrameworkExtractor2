@@ -1,5 +1,5 @@
 /** Derived, never stored: library status, the five interview stages, and real progress. Pure. */
-import { FRAMEWORK_STAGE_KEYS, TEACHING_COMPONENT_KEYS, type FrameworkProjectState, type TeachingStep } from "./contract.ts";
+import { evidenceOf, FRAMEWORK_STAGE_KEYS, PROOF_KEYS, TEACHING_COMPONENT_KEYS, type FrameworkProjectState, type ProofKey, type TeachingStep } from "./contract.ts";
 
 export type LibraryStatus = "Discovering" | "Needs review" | "Teaching in progress" | "Ready";
 export const STAGES = ["Discover", "Structure", "Refine", "Teach", "Activate"] as const;
@@ -33,7 +33,32 @@ export function progress(st: FrameworkProjectState): number {
   return Math.round((p1 * 0.5 + p2 * 0.5) * 100);
 }
 
+/** The summary line for the milestone card shown when stage `idx` completes. */
+export function milestoneSummary(st: FrameworkProjectState, idx: number): string {
+  const f = st.framework;
+  const names = (f.named_steps?.length ? f.named_steps.map((s) => s.to) : f.raw_steps ?? []).filter(Boolean);
+  if (idx === 0) return [f.anchor?.dream_customer && `For: ${f.anchor.dream_customer}`, f.anchor?.single_result && `Result: ${f.anchor.single_result}`, (f.origin_story ?? "").trim() && "Origin story captured"].filter(Boolean).join(" · ");
+  if (idx === 1) return `${names.length} steps: ${names.join(" · ")}`;
+  if (idx === 2) return `${(f.framework_name ?? "").trim()} · ${names.length} steps`;
+  return `${st.teaching.steps.length} steps × 4 teaching components written`;
+}
+
 /** Story and case study components the user has not confirmed as real. */
-export function unverified(st: FrameworkProjectState): { step: string; key: "story" | "case_study" }[] {
-  return st.teaching.steps.flatMap((s) => (["story", "case_study"] as const).filter((k) => (s[k] ?? "").trim() && !s.verified?.includes(k)).map((key) => ({ step: s.name, key })));
+export function unverified(st: FrameworkProjectState): { step: string; key: ProofKey }[] {
+  return st.teaching.steps.flatMap((s) => PROOF_KEYS.filter((k) => (s[k] ?? "").trim() && evidenceOf(s, k) !== "verified").map((key) => ({ step: s.name, key })));
+}
+
+/** Names, numbers, dates, money: the things that must not be published unless they really happened. */
+const CLAIM_RE = /\d|\$|%|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\b|\b[A-Z][a-z]+,? (?:an?|the|who|from|in)\b/;
+
+/** The latest written story / case study that makes a specific claim and has no evidence answer yet: what the chat's evidence check asks about. */
+export function pendingEvidence(st: FrameworkProjectState): { step: number; key: ProofKey; text: string } | null {
+  for (let i = st.teaching.steps.length - 1; i >= 0; i -= 1) {
+    const s = st.teaching.steps[i];
+    for (const key of [...PROOF_KEYS].reverse()) {
+      const text = (s[key] ?? "").trim();
+      if (text && !evidenceOf(s, key) && CLAIM_RE.test(text)) return { step: i, key, text };
+    }
+  }
+  return null;
 }

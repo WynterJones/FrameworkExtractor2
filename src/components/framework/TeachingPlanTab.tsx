@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { BadgeCheck, ChevronDown, GraduationCap, Pencil, ShieldAlert, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { BadgeCheck, ChevronDown, GraduationCap, Lightbulb, Pencil, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { RewriteMode } from "@/lib/mock/interview";
 import { Button } from "@/components/ui/button";
 import { EditableText } from "./EditableText";
-import { StatusDot, StatusPill, StepNum } from "./StatusPill";
-import { TEACHING_COMPONENT_KEYS, type TeachingComponentKey, type TeachingData, type TeachingStep } from "@/lib/framework/contract";
+import { EvidenceBadge, StatusDot, StatusPill, StepNum } from "./StatusPill";
+import { evidenceOf, isProofKey, TEACHING_COMPONENT_KEYS, type Evidence, type ProofKey, type TeachingComponentKey, type TeachingData, type TeachingStep } from "@/lib/framework/contract";
 
 const META: Record<TeachingComponentKey, { num: number; title: string; sub: string }> = {
   story: { num: 1, title: "Story", sub: "How you earned this lesson — open the teaching with this scene." },
@@ -15,8 +15,6 @@ const META: Record<TeachingComponentKey, { num: number; title: string; sub: stri
 };
 
 const text = (s: TeachingStep, k: TeachingComponentKey) => (s[k] ?? "").trim();
-/** Story and case study are factual claims: they need the user's confirmation before they count as real. */
-const NEEDS_PROOF: TeachingComponentKey[] = ["story", "case_study"];
 const REWRITES: [RewriteMode, string][] = [["regenerate", "Regenerate"], ["shorter", "Shorter"], ["more tactical", "More tactical"], ["more like my voice", "More like my voice"]];
 
 export interface TeachingPlanTabProps {
@@ -26,12 +24,13 @@ export interface TeachingPlanTabProps {
   autoFillStep: number | null;
   onComponentChange: (i: number, k: TeachingComponentKey, v: string) => void;
   onRemoveStep: (i: number) => void;
-  onVerify: (i: number, k: TeachingComponentKey, on: boolean) => void;
+  /** Story / case study proof answer; null clears it. */
+  onEvidence: (i: number, k: ProofKey, e: Evidence | null) => void;
   /** Scoped rewrite of one component through the chat. */
   onRewrite: (i: number, label: string, mode: RewriteMode) => void;
 }
 
-export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillStep, onComponentChange, onRemoveStep, onVerify, onRewrite }: TeachingPlanTabProps) {
+export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillStep, onComponentChange, onRemoveStep, onEvidence, onRewrite }: TeachingPlanTabProps) {
   const steps = teaching.steps ?? [];
   const pointer = Math.min(Math.max(teaching.current_step - 1, 0), Math.max(steps.length - 1, 0));
   const [selected, setSelected] = useState(pointer);
@@ -100,10 +99,7 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
               <header className="mb-2 flex items-center gap-3">
                 <StepNum n={meta.num} />
                 <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>
-                {t && NEEDS_PROOF.includes(k) ? (step.verified?.includes(k)
-                  ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-400"><BadgeCheck className="h-3 w-3" /> Verified by you</span>
-                  : <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-400"><ShieldAlert className="h-3 w-3" /> Needs proof</span>
-                ) : <StatusPill status={status} pendingLabel="Not completed" />}
+                {t && isProofKey(k) ? <EvidenceBadge evidence={evidenceOf(step, k)} /> : <StatusPill status={status} pendingLabel="Not completed" />}
               </header>
               {t || editingBlank === blankKey ? (
                 <>
@@ -116,12 +112,18 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
                         {REWRITES.map(([mode, label]) => <DropdownMenuItem key={mode} onSelect={() => onRewrite(i, meta.title, mode)}>{label}</DropdownMenuItem>)}
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    {NEEDS_PROOF.includes(k) && (
-                      <button type="button" onClick={() => onVerify(i, k, !step.verified?.includes(k))} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-                        <BadgeCheck className="h-3 w-3" /> {step.verified?.includes(k) ? "Unmark" : "This really happened"}
-                      </button>
-                    )}
-                    {k === "case_study" && !step.verified?.includes(k) && <span className="text-xs text-muted-foreground">Exports label it an illustrative example until you confirm it.</span>}
+                    {isProofKey(k) && (() => {
+                      const ev = evidenceOf(step, k);
+                      const btn = "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground";
+                      return (
+                        <>
+                          {ev !== "verified" && <button type="button" onClick={() => onEvidence(i, k, "verified")} className={btn}><BadgeCheck className="h-3 w-3" /> This really happened</button>}
+                          {ev !== "illustrative" && <button type="button" onClick={() => onEvidence(i, k, "illustrative")} className={btn}><Lightbulb className="h-3 w-3" /> It's illustrative</button>}
+                          {ev === "verified" && <button type="button" onClick={() => onEvidence(i, k, null)} className={btn}>Unmark</button>}
+                          {k === "case_study" && ev !== "verified" && <span className="text-xs text-muted-foreground">Exports label it an illustrative example until you confirm it.</span>}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
                 </>

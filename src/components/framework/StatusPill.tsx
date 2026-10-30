@@ -1,5 +1,5 @@
-import { Check } from "lucide-react";
-import type { StageStatus } from "@/lib/framework/contract";
+import { BadgeCheck, Check, Lightbulb, ShieldAlert } from "lucide-react";
+import type { Evidence, StageStatus } from "@/lib/framework/contract";
 
 const LABEL: Record<StageStatus, string> = { done: "Done", active: "In progress", pending: "Up next" };
 
@@ -27,4 +27,15 @@ export function StatusDot({ status, label }: { status: StageStatus; label?: stri
       {status === "done" ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : label ?? (status === "active" ? <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" /> : null)}
     </span>
   );
+}
+
+const EVIDENCE: Record<Evidence, { label: string; cls: string; Icon: typeof Check }> = {
+  verified: { label: "Verified by you", cls: "bg-emerald-500/15 text-emerald-400", Icon: BadgeCheck },
+  illustrative: { label: "Illustrative example", cls: "bg-sky-500/10 text-sky-300", Icon: Lightbulb },
+  needs_proof: { label: "Needs proof", cls: "bg-amber-500/15 text-amber-400", Icon: ShieldAlert },
+};
+/** Proof status of a story or case study. No answer yet reads as Needs proof. */
+export function EvidenceBadge({ evidence }: { evidence?: Evidence }) {
+  const { label, cls, Icon } = EVIDENCE[evidence ?? "needs_proof"];
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}><Icon className="h-3 w-3" /> {label}</span>;
 }

@@ -77,6 +77,13 @@ export function proposeFrameworkNames(anchor: FrameworkAnchor | null | undefined
   return [`The ${key} Stack`, `The ${stepCount}-Step ${key} Method`, `${key} Momentum`, `The ${key} Operator's Path`, `The Compounding ${key} System`];
 }
 
+/** One-sentence promise for the framework proposal card and the tagline. */
+export function proposePromise(anchor: FrameworkAnchor | null | undefined, stepCount: number): string {
+  const who = (anchor?.dream_customer ?? "").split(/[,.;]/)[0].trim();
+  const short = who.length > 70 ? `${who.slice(0, 67).trim()}…` : who;
+  return `A ${stepCount}-step framework${short ? ` for ${short.charAt(0).toLowerCase()}${short.slice(1)}` : ""}`;
+}
+
 export function proposeStrategy(step: TeachingStep, anchor: FrameworkAnchor | null | undefined): string {
   const who = (anchor?.dream_customer ?? "").split(/(?<=[a-z])[,.]\s/i)[0]?.trim().replace(/^the /i, "the ") || "your dream customer";
   return `${step.name} works because ${who} is drowning in options, not short on them. Doing this step first removes the decisions that quietly stall everything downstream. Skip it and every later step costs twice as much effort for half the result.`;
@@ -165,7 +172,7 @@ function phase1Turn(state: FrameworkProjectState, text: string | null): string {
   const steps: TeachingStep[] = (f.named_steps ?? []).map((s, i) => ({ ...blankTeachingStep(s.to), components: { story: i === 0 ? "active" : "pending", strategy: "pending", tactics: "pending", case_study: "pending" } }));
   const first = steps[0]?.name ?? "Step 1";
   return `**${name}**. That is the framework. Phase 1 is complete: anchor, origin, ${steps.length} named steps, and a name you can stamp on the deck.\n\nNow we add the teaching layer. For each step we capture a Story, the Strategy, the Tactics, and a Case Study. About 8 minutes per step.\n\nStep 1, **${first}**. ${STORY_Q(first)}` +
-    block({ phase: 2, framework: { framework_name: name, framework_tagline: `A ${steps.length}-step framework`, stages: { anchor: "done", origin: "done", hypothesis: "done", naming_steps: "done", naming_framework: "done" } }, teaching: { current_step: 1, steps } });
+    block({ phase: 2, framework: { framework_name: name, framework_tagline: proposePromise(f.anchor, steps.length), stages: { anchor: "done", origin: "done", hypothesis: "done", naming_steps: "done", naming_framework: "done" } }, teaching: { current_step: 1, steps } });
 }
 
 function phase2Turn(state: FrameworkProjectState, text: string | null): string {
@@ -246,18 +253,11 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
   return `${lead}\n\n${follow}` + block({ teaching: { current_step: nextStep, step_updates: [update], ...variantsIfComplete(state, update) } });
 }
 
-export interface QuickReplies { title?: string; choice?: boolean; options: { label: string; send: string }[] }
+export interface QuickReplies { options: { label: string; send: string }[] }
 
-/** Tap-to-answer suggestions for the current point in the interview. The composer always stays open for a free answer. */
+/** Tap-to-answer chips for Phase 2. Phase 1's naming stages get their own cards. The composer always stays open for a free answer. */
 export function quickReplies(state: FrameworkProjectState): QuickReplies | null {
-  const f = state.framework;
-  if (state.phase === 1) {
-    if (f.stages.naming_steps === "active") return { options: [{ label: "Use these names", send: "yes" }] };
-    if (f.stages.naming_framework === "active") {
-      return { title: "Framework name proposals", choice: true, options: proposeFrameworkNames(f.anchor, (f.named_steps ?? []).length).map((n, i) => ({ label: n, send: String(i + 1) })) };
-    }
-    return null;
-  }
+  if (state.phase === 1) return null;
   const t = normalizeTeaching(state.teaching);
   const step = t.steps.find((s) => TEACHING_COMPONENT_KEYS.some((k) => !(s[k] ?? "").trim()));
   if (!step) return null;
@@ -265,6 +265,32 @@ export function quickReplies(state: FrameworkProjectState): QuickReplies | null 
   const draft = { label: `Draft the ${COMPONENT_LABEL[key].toLowerCase()} for me`, send: "you write it" };
   const all = { label: `Generate all four for ${step.name}`, send: autoFillMessage(step.name) };
   return { options: key === "strategy" ? [{ label: "Yes, that captures it", send: "yes" }, draft, all] : [draft, all] };
+}
+
+const PHASE1_WORKING: Record<string, string> = {
+  anchor: "Locking in your anchor…",
+  origin: "Capturing your origin story…",
+  hypothesis: "Structuring your steps…",
+  naming_steps: "Naming your steps…",
+  naming_framework: "Locking the framework name…",
+};
+
+/** What the director is doing on this turn, in plain words, for the working state. */
+export function workingLabel(state: FrameworkProjectState, text: string | null): string {
+  if (text === null) return "Getting your Creative Director ready…";
+  const auto = text.match(AUTO_FILL_RE);
+  if (auto) return `Drafting all four for ${auto[1]}…`;
+  const rw = text.match(REWRITE_RE);
+  if (rw) return `Rewriting ${rw[1].toLowerCase()} for ${rw[2]}…`;
+  if (state.phase === 1) {
+    const stage = (Object.keys(PHASE1_WORKING) as (keyof typeof state.framework.stages)[]).find((k) => state.framework.stages[k] !== "done");
+    return PHASE1_WORKING[stage ?? "naming_framework"];
+  }
+  const t = normalizeTeaching(state.teaching);
+  const step = t.steps.find((s) => TEACHING_COMPONENT_KEYS.some((k) => !(s[k] ?? "").trim()));
+  if (!step) return "Assembling the brief…";
+  const key = TEACHING_COMPONENT_KEYS.find((k) => !(step[k] ?? "").trim())!;
+  return `Writing ${COMPONENT_LABEL[key].toLowerCase()} for ${step.name}…`;
 }
 
 /** One Creative Director turn. `text === null` is the free kickoff greeting. */

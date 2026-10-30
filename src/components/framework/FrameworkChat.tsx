@@ -1,17 +1,19 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { ArrowDown, Brain, Check, RefreshCw, Send, Square } from "lucide-react";
+import { ArrowDown, Brain, Check, Pencil, RefreshCw, Send, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "./Markdown";
 import { fakeStream } from "@/lib/mock/ai";
-import { creativeDirectorTurn, quickReplies } from "@/lib/mock/interview";
+import { creativeDirectorTurn, quickReplies, workingLabel } from "@/lib/mock/interview";
+import { milestoneSummary, pendingEvidence, stageIndex } from "@/lib/framework/status";
+import { EvidenceCard, MilestoneCard, ProposalCard, StepNamesCard } from "./ChatCards";
 import { useBrain } from "@/lib/brain";
 import { AVATARS } from "@/lib/mock/data";
 import { buildChatSystemPrompt } from "@/lib/framework/prompts";
 import {
-  detectGenerationFailure, extractFeStatePatches, stripFeState,
+  applyFeStatePatches, detectGenerationFailure, extractFeStatePatches, stripFeState,
   FE_CHAT_TURN_LIMIT, type FeStatePatch,
 } from "@/lib/framework/protocol";
-import type { ChatMessage, FrameworkProjectState, FrameworkSetup } from "@/lib/framework/contract";
+import type { ChatMessage, Evidence, FrameworkProjectState, FrameworkSetup, ProofKey } from "@/lib/framework/contract";
 import { SetupFields, setupComplete } from "./SetupBar";
 
 /**
@@ -36,8 +38,16 @@ export interface FrameworkChatProps {
   voiceBlock?: string;
   /** A template's Anchor answer: sent automatically right after the kickoff greeting. */
   firstAnswer?: string;
+  /** Evidence check card answer for one story / case study. */
+  onEvidence: (step: number, key: ProofKey, e: Evidence) => void;
+  /** Step names card: add a raw step. */
+  onAddStep: () => void;
+  /** Edit answer on a user message: the parent rewinds to just before it. */
+  onEditMessage: (id: string) => void;
+  /** Milestone card: open an output tab. */
+  onReview: (tab: "framework" | "use") => void;
 }
-export interface FrameworkChatHandle { send: (text: string) => void }
+export interface FrameworkChatHandle { send: (text: string) => void; prefill: (text: string) => void }
 
 interface Runtime extends ChatMessage { streaming?: boolean }
 const newId = (p: string) => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -49,10 +59,13 @@ function splitGenLine(content: string) {
   return /^(generated|rewrote)\s+.+/i.test(head) ? { gen: head.replace(/[.\s]+$/, ""), rest: rest.join("\n").trim() } : { gen: null, rest: content };
 }
 
-function GenCard({ generating, label }: { generating: boolean; label: string }) {
+function GenCard({ generating, label, onStop }: { generating: boolean; label: string; onStop?: () => void }) {
   return (
     generating ? (
-      <p className="text-[15px]"><span className="text-shimmer">{label}</span></p>
+      <p className="flex items-center gap-3 text-[15px]" role="status">
+        <span className="text-shimmer">{label}</span>
+        {onStop && <button type="button" onClick={onStop} className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground">Stop</button>}
+      </p>
     ) : (
       <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
         <Check className="h-3 w-3 text-emerald-500/80" strokeWidth={2.5} />
@@ -64,7 +77,7 @@ function GenCard({ generating, label }: { generating: boolean; label: string }) 
 }
 
 export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>(function FrameworkChat(
-  { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart, setup, onSetupChange, voiceBlock, firstAnswer }, ref,
+  { state, onMessagesChange, onStatePatch, onStreamingChange, started, onStart, setup, onSetupChange, voiceBlock, firstAnswer, onEvidence, onAddStep, onEditMessage, onReview }, ref,
 ) {
   const messages = state.chat_messages;
   const [runtime, setRuntime] = useState<Runtime[]>(messages);
@@ -95,9 +108,11 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   const [away, setAway] = useState(false);
   const brain = useBrain();
   const [brainDismissed, setBrainDismissed] = useState(false);
+  const [working, setWorking] = useState("Thinking…");
 
   useEffect(() => { onStreamingChange?.(streaming); }, [streaming, onStreamingChange]);
-  useEffect(() => { const el = scrollRef.current; if (el && atBottom.current) el.scrollTop = el.scrollHeight; }, [runtime, streaming]);
+  // State too: the naming / evidence cards appear on the patch that lands after the stream ends.
+  useEffect(() => { const el = scrollRef.current; if (el && atBottom.current) el.scrollTop = el.scrollHeight; }, [runtime, streaming, state]);
   const wasStreaming = useRef(false);
   useEffect(() => { if (wasStreaming.current && !streaming) requestAnimationFrame(() => inputRef.current?.focus()); wasStreaming.current = streaming; }, [streaming]);
 
@@ -121,7 +136,9 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
     const ctrl = { aborted: false }; abortRef.current = ctrl;
     let raw = "";
     try {
-      const reply = creativeDirectorTurn(stateRef.current, kickoff ? null : text.trim());
+      const startState = stateRef.current;
+      setWorking(workingLabel(startState, kickoff ? null : text.trim()));
+      const reply = creativeDirectorTurn(startState, kickoff ? null : text.trim());
       await fakeStream(reply, (soFar) => {
         if (ctrl.aborted) throw new Error("AbortError");
         raw = soFar;
@@ -139,6 +156,14 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
       }
       commit((prev) => {
         let next = prev.map((m) => (m.id === assistant.id ? { ...m, content: visibleFinal, streaming: false } : m));
+        // A stage completed on this turn (other than the Phase 2 switch, which has its divider): drop a milestone card before the reply.
+        const after = patches.length ? applyFeStatePatches(startState, patches) : startState;
+        const done = stageIndex(after) - 1;
+        if (done >= stageIndex(startState) && !patches.some((p) => p.phase === 2)) {
+          const idx = next.findIndex((m) => m.id === assistant.id);
+          const card: Runtime = { id: newId("m"), role: "system", content: milestoneSummary(after, done), created_at: new Date().toISOString(), milestone: done };
+          next = [...next.slice(0, idx), card, ...next.slice(idx)];
+        }
         if (patches.some((p) => p.phase === 2) && !next.some((m) => m.phase_divider)) {
           const idx = next.findIndex((m) => m.id === assistant.id);
           const divider: Runtime = { id: newId("d"), role: "system", content: "Framework locked", created_at: new Date().toISOString(), phase_divider: true };
@@ -171,12 +196,16 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started]);
 
-  useImperativeHandle(ref, () => ({ send: (t) => { if (t.trim()) void runTurn(t, false); } }), [runTurn]);
+  useImperativeHandle(ref, () => ({ send: (t) => { if (t.trim()) void runTurn(t, false); }, prefill: (t) => prefill(t) }));
 
   const submit = (e: React.FormEvent) => { e.preventDefault(); const t = input.trim(); if (!t || streaming || starting || atLimit) return; setInput(""); void runTurn(t, false); };
   const retry = () => { if (streaming) return; setError(null); const t = lastTurn ?? { text: "", kickoff: true }; void runTurn(t.text, t.kickoff, true); };
-  const visible = useMemo(() => runtime.filter((m) => m.role !== "system" || m.phase_divider), [runtime]);
-  const qr = started && !streaming && !error && !atLimit ? quickReplies(state) : null;
+  const visible = useMemo(() => runtime.filter((m) => m.role !== "system" || m.phase_divider || m.milestone !== undefined), [runtime]);
+  const idle = started && !streaming && !error && !atLimit;
+  const f = state.framework;
+  const evidence = idle && state.phase === 2 ? pendingEvidence(state) : null;
+  const stop = () => { if (abortRef.current) abortRef.current.aborted = true; };
+  const qr = idle ? quickReplies(state) : null;
   const avatar = AVATARS.find((a) => a.id === setup.customer_avatar_id);
   // One relevant Brain finding at the moment it helps (the anchor question), never a profile dump.
   const brainCard = brain && avatar && !brainDismissed && started && !streaming && state.phase === 1 && !state.framework.anchor && turnsUsed === 0 && visible.length > 0;
@@ -205,13 +234,15 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
                 <span className="h-px flex-1 bg-border/60" /><Check className="h-3 w-3 text-emerald-500/80" strokeWidth={2.5} /><span><span className="font-medium text-foreground/80">Framework locked</span> · Phase 2, the teaching plan</span><span className="h-px flex-1 bg-border/60" />
               </div>
             );
+            if (m.milestone !== undefined) return <MilestoneCard key={m.id} stage={m.milestone} summary={m.content} onReview={() => onReview(m.milestone! >= 3 ? "use" : "framework")} />;
             if (m.role === "user") return (
-              <div key={m.id} className="flex justify-end">
+              <div key={m.id} className="group flex items-start justify-end gap-2">
+                {!streaming && <button type="button" onClick={() => onEditMessage(m.id)} aria-label="Edit this answer" title="Edit this answer" className="mt-2 grid h-7 w-7 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"><Pencil className="h-3.5 w-3.5" /></button>}
                 <div className="max-w-[85%] space-y-2 rounded-3xl rounded-br-lg bg-gradient-to-br from-muted to-muted/60 px-4 py-3 text-[15px] leading-relaxed shadow-[inset_0_1px_0_hsl(0_0%_100%/0.05)]">{m.content.split("\n\n").map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)}</div>
               </div>
             );
             const { gen, rest } = splitGenLine(m.content);
-            if (m.streaming && (!m.content.trim() || gen)) return <GenCard key={m.id} generating label={gen ? "Writing it into the plan…" : "Thinking…"} />;
+            if (m.streaming && (!m.content.trim() || gen)) return <GenCard key={m.id} generating label={working} onStop={stop} />;
             return (
               <div key={m.id} className="space-y-4">
                 {gen && <GenCard generating={false} label={gen} />}
@@ -229,16 +260,14 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
               </div>
             </div>
           )}
-          {qr?.choice && (
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{qr.title}</p>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {qr.options.map((o, i) => (
-                  <li key={o.label}><button type="button" onClick={() => void runTurn(o.send, false)} className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-background/50 px-3 py-2.5 text-left text-sm font-medium transition-colors hover:border-primary/50 hover:bg-primary/[0.06]"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border text-xs text-muted-foreground">{i + 1}</span>{o.label}</button></li>
-                ))}
-                <li><button type="button" onClick={() => inputRef.current?.focus()} className="flex w-full items-center rounded-xl border border-dashed border-border px-3 py-2.5 text-left text-sm text-muted-foreground hover:text-foreground">Something else…</button></li>
-              </ul>
-            </div>
+          {idle && state.phase === 1 && f.stages.naming_steps === "active" && (
+            <StepNamesCard rawSteps={f.raw_steps ?? []} onSend={(t) => void runTurn(t, false)} onAddStep={onAddStep} disabled={!idle} />
+          )}
+          {idle && state.phase === 1 && f.stages.naming_framework === "active" && (
+            <ProposalCard framework={f} onSend={(t) => void runTurn(t, false)} onRefine={(n) => prefill(n)} disabled={!idle} />
+          )}
+          {evidence && (
+            <EvidenceCard stepName={state.teaching.steps[evidence.step]?.name ?? ""} keyName={evidence.key} text={evidence.text} onAnswer={(e) => onEvidence(evidence.step, evidence.key, e)} />
           )}
           {error && (
             <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
@@ -256,7 +285,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
 
       <div className="shrink-0 px-3 pb-3 pt-2 sm:px-5 sm:pb-4">
         <div className="mx-auto w-full max-w-[750px]">
-          {qr && !qr.choice && (
+          {qr && !evidence && (
             <div className="mb-2 flex flex-wrap gap-1.5" aria-label="Suggested answers">
               {qr.options.map((o) => <button key={o.label} type="button" onClick={() => void runTurn(o.send, false)} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">{o.label}</button>)}
             </div>
