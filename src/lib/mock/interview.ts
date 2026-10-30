@@ -38,8 +38,17 @@ const approves = (t: string) => /^(y(es|ep|eah)?|ok(ay)?|sure|go|good|great|perf
 const delegates = (t: string) => /\b(you (do|write|draft|decide) it|come up with|fill it in|draft it|you write|your call|auto-?fill)\b/i.test(t);
 
 const AUTO_FILL_RE = /^For the framework step "(.+?)", draft all four/i;
+export const autoFillMessage = (name: string) => `For the framework step "${name}", draft all four teaching components yourself — Story, Strategy, Tactics, and Case Study. Write each one straight into the teaching plan on the right. Use your best judgement from everything we have covered; I will review and tweak after.`;
+
+export type RewriteMode = "regenerate" | "shorter" | "more tactical" | "more like my voice";
+const REWRITE_RE = /^Rewrite the (Story|Strategy|Tactics|Case Study) for "(.+?)"(?:: (regenerate|shorter|more tactical|more like my voice))?/i;
+/** A scoped rewrite request from the teaching editor: one component of one step. */
+export const rewriteMessage = (label: string, step: string, mode: RewriteMode) => `Rewrite the ${label} for "${step}": ${mode}.`;
 
 function parseAnchor(t: string): FrameworkAnchor {
+  // The new-framework prompt: "I help [who] achieve [result] by [how]".
+  const m = t.trim().match(/^I help (.+?) (?:achieve|get|to|reach|go from) (.+?)(?:,? by (.+?))?\.?$/i);
+  if (m) return { niche: m[3] ? `${m[3]} for ${m[1]}` : m[1], dream_customer: m[1], single_result: m[2] };
   let parts = splitLines(t);
   if (parts.length < 3) parts = sentences(t);
   const [niche = t.trim(), dream = parts[0] ?? t.trim(), result = parts[1] ?? dream] = parts;
@@ -79,8 +88,9 @@ function draftStory(step: TeachingStep, anchor: FrameworkAnchor | null | undefin
 function draftTactics(step: TeachingStep): string {
   return `1. Block 45 minutes and do ${step.name} before anything else that week.\n2. Write the output down in one page, in plain language a newcomer could follow.\n3. Share that page with one person who will push back, and revise once.\n4. Set a 7-day check-in to confirm the step actually stuck.\n\nPitfall: treating this as a one-time task. It is a habit, and the second pass is where the value shows up.`;
 }
+// Never a factual claim: the draft is labelled until the user swaps in a real client and confirms it.
 function draftCaseStudy(step: TeachingStep, anchor: FrameworkAnchor | null | undefined): string {
-  return `A client in ${anchor?.niche ?? "the same niche"} arrived stuck for six months. We ran ${step.name} in a single session, and within three weeks the metric they cared about moved for the first time that year. The only thing that changed was doing this step on purpose instead of hoping it happened on its own.`;
+  return `Illustrative example (replace with a real client before you publish): a client in ${anchor?.niche ?? "the same niche"} arrived stuck for six months. We ran ${step.name} in a single session, and within three weeks the metric they cared about moved for the first time that year. The only thing that changed was doing this step on purpose instead of hoping it happened on its own.`;
 }
 
 const COMPONENT_LABEL: Record<TeachingComponentKey, string> = { story: "Story", strategy: "Strategy", tactics: "Tactics", case_study: "Case Study" };
@@ -171,9 +181,24 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
     const num = steps.indexOf(step) + 1;
     const update = { step: num, name: step.name, story: step.story || draftStory(step, anchor), strategy: step.strategy || proposeStrategy(step, anchor), tactics: step.tactics || draftTactics(step), case_study: step.case_study || draftCaseStudy(step, anchor) };
     const extra = variantsIfComplete(state, update);
-    const tail = "scale_variants" in extra ? "That completes every step, so I also assembled the five scale variants (60-second through multi-day); they are in the brief." : "Read them on the right, tweak anything that is not in your voice, and tell me when you are ready for the next step.";
-    return `**Generated the full teaching for "${step.name}".**\n\nI drafted all four components from everything we have covered. ${tail}` +
+    const tail = "scale_variants" in extra ? "That completes every step. The brief is ready in Export." : "Review it on the right, then say when you are ready for the next step.";
+    return `**Generated the full teaching for "${step.name}".**\n\n${tail}` +
       block({ teaching: { current_step: num, step_updates: [update], ...extra } });
+  }
+
+  const rw = text?.match(REWRITE_RE);
+  if (rw) {
+    const key = (Object.keys(COMPONENT_LABEL) as TeachingComponentKey[]).find((k) => COMPONENT_LABEL[k].toLowerCase() === rw[1].toLowerCase())!;
+    const i = Math.max(0, steps.findIndex((s) => s.name.toLowerCase() === rw[2].toLowerCase()));
+    const step = steps[i];
+    const mode = (rw[3]?.toLowerCase() ?? "regenerate") as RewriteMode;
+    const fresh = key === "story" ? draftStory(step, anchor) : key === "strategy" ? proposeStrategy(step, anchor) : key === "tactics" ? draftTactics(step) : draftCaseStudy(step, anchor);
+    const cur = (step[key] ?? "").trim() || fresh;
+    const value = mode === "shorter" ? sentences(cur).slice(0, 2).join(" ")
+      : mode === "more tactical" ? `${cur}\n\nDo this first:\n${draftTactics(step).split("\n").slice(0, 2).join("\n")}`
+      : mode === "more like my voice" ? cur.replace(/\byou\b/g, "I").replace(/\bYou\b/g, "I")
+      : fresh;
+    return `**Rewrote ${COMPONENT_LABEL[key]} for "${step.name}" (${mode}).**` + block({ teaching: { step_updates: [{ step: i + 1, name: step.name, [key]: value }] } });
   }
 
   const idx = steps.findIndex((s) => TEACHING_COMPONENT_KEYS.some((k) => !(s[k] ?? "").trim()));
@@ -219,6 +244,27 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
   const nextStep = key === "case_study" && steps[num] ? num + 1 : num;
   const update = { step: num, name: step.name, [key]: value };
   return `${lead}\n\n${follow}` + block({ teaching: { current_step: nextStep, step_updates: [update], ...variantsIfComplete(state, update) } });
+}
+
+export interface QuickReplies { title?: string; choice?: boolean; options: { label: string; send: string }[] }
+
+/** Tap-to-answer suggestions for the current point in the interview. The composer always stays open for a free answer. */
+export function quickReplies(state: FrameworkProjectState): QuickReplies | null {
+  const f = state.framework;
+  if (state.phase === 1) {
+    if (f.stages.naming_steps === "active") return { options: [{ label: "Use these names", send: "yes" }] };
+    if (f.stages.naming_framework === "active") {
+      return { title: "Framework name proposals", choice: true, options: proposeFrameworkNames(f.anchor, (f.named_steps ?? []).length).map((n, i) => ({ label: n, send: String(i + 1) })) };
+    }
+    return null;
+  }
+  const t = normalizeTeaching(state.teaching);
+  const step = t.steps.find((s) => TEACHING_COMPONENT_KEYS.some((k) => !(s[k] ?? "").trim()));
+  if (!step) return null;
+  const key = TEACHING_COMPONENT_KEYS.find((k) => !(step[k] ?? "").trim())!;
+  const draft = { label: `Draft the ${COMPONENT_LABEL[key].toLowerCase()} for me`, send: "you write it" };
+  const all = { label: `Generate all four for ${step.name}`, send: autoFillMessage(step.name) };
+  return { options: key === "strategy" ? [{ label: "Yes, that captures it", send: "yes" }, draft, all] : [draft, all] };
 }
 
 /** One Creative Director turn. `text === null` is the free kickoff greeting. */

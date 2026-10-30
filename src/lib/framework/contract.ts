@@ -96,6 +96,8 @@ export interface TeachingStep {
   tactics?: string | null;
   case_study?: string | null;
   components: Record<TeachingComponentKey, StageStatus>;
+  /** Components the user confirmed as real. Anything else is an AI draft; any change to the text drops it again. */
+  verified?: TeachingComponentKey[] | null;
 }
 
 export interface ScaleVariants {
@@ -121,7 +123,10 @@ export interface FrameworkProjectState {
 
 export type { FrameworkProject } from "@/types";
 
+/** Legacy placeholder; new projects get `New framework — Oct 30` until the interview names them. */
 export const DEFAULT_FRAMEWORK_TITLE = "Untitled Framework";
+export const provisionalTitle = (d = new Date()) => `New framework — ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+export const isProvisionalTitle = (t: string) => t.trim() === DEFAULT_FRAMEWORK_TITLE || t.trim().startsWith("New framework — ");
 
 export function initialFrameworkState(): FrameworkProjectState {
   return {

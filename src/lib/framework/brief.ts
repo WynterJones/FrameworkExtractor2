@@ -21,9 +21,12 @@ export const SCALE_VARIANT_ROWS: { key: keyof ScaleVariants; label: string }[] =
   { key: "multi_day", label: "The multi-day version" },
 ];
 
+/** An unconfirmed case study is never exported as fact. */
+export const caseStudyLabel = (step: TeachingStep) => (step.verified?.includes("case_study") ? "Case Study" : "Case Study (illustrative example, not yet confirmed)");
+
 function stepMd(step: TeachingStep, i: number): string {
   const sec = (label: string, v: string | null | undefined) => `### ${label}\n\n${clean(v) || "_Not captured yet._"}\n`;
-  return [`## Step ${i + 1}: ${clean(step.name) || `Step ${i + 1}`}`, "", sec("Story", step.story), sec("Strategy", step.strategy), sec("Tactics", step.tactics), sec("Case Study", step.case_study)].join("\n");
+  return [`## Step ${i + 1}: ${clean(step.name) || `Step ${i + 1}`}`, "", sec("Story", step.story), sec("Strategy", step.strategy), sec("Tactics", step.tactics), sec(caseStudyLabel(step), step.case_study)].join("\n");
 }
 
 export function buildFrameworkBriefMarkdown(p: FrameworkProject): string {

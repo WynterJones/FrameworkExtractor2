@@ -142,7 +142,7 @@ const chiroState: FrameworkProjectState = {
 
 const SEED: Row[] = [
   { title: "The Momentum Method", source: "ai-interview", setup: { character_id: "ac_1", voice_id: "v_1", customer_avatar_id: "av_1" }, state: momentumState, archived: false },
-  { title: "Untitled Framework", source: "ai-interview", setup: { character_id: "ac_2", voice_id: "v_3", customer_avatar_id: "av_3" }, state: chiroState, archived: false },
+  { title: "Patient reactivation", source: "ai-interview", setup: { character_id: "ac_2", voice_id: "v_3", customer_avatar_id: "av_3" }, state: chiroState, archived: false },
 ];
 
 overskill.entities.framework_project.seed(SEED);

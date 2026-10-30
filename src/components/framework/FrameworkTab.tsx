@@ -1,4 +1,4 @@
-import { AudioLines, Compass, Target, User } from "lucide-react";
+import { ArrowDown, ArrowUp, AudioLines, Compass, Plus, Target, Trash2, User } from "lucide-react";
 import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import { EditableText } from "./EditableText";
 import { StatusPill, StepNum } from "./StatusPill";
@@ -8,12 +8,30 @@ import { FRAMEWORK_STAGE_KEYS, type FrameworkAnchor, type FrameworkData, type Fr
 const STAGE_META: Record<FrameworkStageKey, { num: number; title: string; sub: string }> = {
   anchor: { num: 1, title: "Anchor", sub: "Confirm niche, dream customer, and the single result." },
   origin: { num: 2, title: "Origin Story", sub: "The specific scene where the framework was earned." },
-  hypothesis: { num: 3, title: "Hypothesis", sub: "3–7 ordered steps extracted via naive-newcomer + reverse-pass questions." },
+  hypothesis: { num: 3, title: "The Steps", sub: "3–7 ordered steps, from a newcomer's first move to the result." },
   naming_steps: { num: 4, title: "Naming The Steps", sub: "Each raw step gets a name that earns its own teaching slot." },
   naming_framework: { num: 5, title: "Naming The Framework", sub: "The whole thing gets a name you can teach, sell, and stamp on the deck." },
 };
 
-function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStageKey; framework: FrameworkData; onChange: (p: Partial<FrameworkData>) => void }) {
+export type StepOp = { move: number; dir: -1 | 1 } | { add: true };
+interface StepEdit { onStepOp: (op: StepOp) => void; onRemoveStep: (i: number) => void }
+
+/** Move up / down / remove for one step; shown on hover or focus. Steps stay between 3 and 7. */
+function StepControls({ i, count, onStepOp, onRemoveStep }: StepEdit & { i: number; count: number }) {
+  const btn = "grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30";
+  return (
+    <span className="flex shrink-0 gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/step:opacity-100">
+      <button type="button" className={btn} disabled={i === 0} onClick={() => onStepOp({ move: i, dir: -1 })} aria-label={`Move step ${i + 1} up`}><ArrowUp className="h-3.5 w-3.5" /></button>
+      <button type="button" className={btn} disabled={i === count - 1} onClick={() => onStepOp({ move: i, dir: 1 })} aria-label={`Move step ${i + 1} down`}><ArrowDown className="h-3.5 w-3.5" /></button>
+      <button type="button" className={`${btn} hover:text-destructive`} disabled={count <= 3} onClick={() => onRemoveStep(i)} aria-label={`Remove step ${i + 1}`} title={count <= 3 ? "A framework needs at least 3 steps" : undefined}><Trash2 className="h-3.5 w-3.5" /></button>
+    </span>
+  );
+}
+const AddStep = ({ count, onStepOp }: { count: number; onStepOp: (op: StepOp) => void }) => count < 7 ? (
+  <button type="button" onClick={() => onStepOp({ add: true })} className="mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"><Plus className="h-3.5 w-3.5" /> Add step</button>
+) : null;
+
+function StageBody({ stageKey, framework, onChange, onStepOp, onRemoveStep }: { stageKey: FrameworkStageKey; framework: FrameworkData; onChange: (p: Partial<FrameworkData>) => void } & StepEdit) {
   switch (stageKey) {
     case "anchor": {
       const a = framework.anchor!;
@@ -35,31 +53,40 @@ function StageBody({ stageKey, framework, onChange }: { stageKey: FrameworkStage
       );
     case "hypothesis": {
       const steps = framework.raw_steps ?? [];
+      const editable = !(framework.named_steps ?? []).length;
       return (
+        <>
         <ol className="space-y-1">
           {steps.map((s, i) => (
-            <li key={i} className="flex items-start gap-3">
+            <li key={i} className="group/step flex items-start gap-3">
               <span className="w-5 shrink-0 pt-[7px] text-right text-xs leading-none tabular-nums text-muted-foreground">{i + 1}.</span>
               <EditableText value={s} ariaLabel={`Step ${i + 1}`} placeholder={`Step ${i + 1}`} onChange={(v) => onChange({ raw_steps: steps.map((x, j) => (j === i ? v : x)) })} />
+              {editable && <StepControls i={i} count={steps.length} onStepOp={onStepOp} onRemoveStep={onRemoveStep} />}
             </li>
           ))}
         </ol>
+        {editable && <AddStep count={steps.length} onStepOp={onStepOp} />}
+        </>
       );
     }
     case "naming_steps": {
       const named = framework.named_steps ?? [];
       return (
+        <>
         <ol className="space-y-2">
           {named.map((s, i) => (
-            <li key={i} className="flex items-start gap-3 rounded-lg bg-muted/40 px-3 py-2.5">
+            <li key={i} className="group/step flex items-start gap-3 rounded-lg bg-muted/40 px-3 py-2.5">
               <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border bg-background text-xs font-semibold tabular-nums text-muted-foreground">{i + 1}</span>
               <span className="min-w-0 flex-1">
                 <EditableText value={s.to} ariaLabel={`Name for step ${i + 1}`} placeholder="Step name" className="-ml-2 text-[15px] font-semibold" onChange={(v) => onChange({ named_steps: named.map((x, j) => (j === i ? { ...x, to: v } : x)) })} />
                 <span className="block text-xs leading-relaxed text-muted-foreground">{s.from}</span>
               </span>
+              <StepControls i={i} count={named.length} onStepOp={onStepOp} onRemoveStep={onRemoveStep} />
             </li>
           ))}
         </ol>
+        <AddStep count={named.length} onStepOp={onStepOp} />
+        </>
       );
     }
     case "naming_framework":
@@ -98,7 +125,7 @@ function SetupStrip({ setup }: { setup: FrameworkSetup }) {
   );
 }
 
-export function FrameworkTab({ framework, setup, onChange }: { framework: FrameworkData; setup: FrameworkSetup; onChange: (p: Partial<FrameworkData>) => void }) {
+export function FrameworkTab({ framework, setup, onChange, onStepOp, onRemoveStep }: { framework: FrameworkData; setup: FrameworkSetup; onChange: (p: Partial<FrameworkData>) => void } & StepEdit) {
   const empty = FRAMEWORK_STAGE_KEYS.every((k) => !frameworkStageHasData(k, framework));
   if (empty) {
     return (
@@ -124,7 +151,7 @@ export function FrameworkTab({ framework, setup, onChange }: { framework: Framew
               <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>
               <StatusPill status={status} />
             </header>
-            {has ? <StageBody stageKey={key} framework={framework} onChange={onChange} /> : (
+            {has ? <StageBody stageKey={key} framework={framework} onChange={onChange} onStepOp={onStepOp} onRemoveStep={onRemoveStep} /> : (
               <p className="text-sm text-muted-foreground">{status === "active" ? "Filling in from the conversation…" : meta.sub}</p>
             )}
           </li>

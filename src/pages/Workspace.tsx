@@ -38,8 +38,8 @@
  * The full spec is prd.md at the repo root.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, Check, Columns2, Download, Loader2, MessageSquare, PanelRight, Pencil, RefreshCw, Zap } from "lucide-react";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { AlertTriangle, Check, ChevronRight, Columns2, Download, Loader2, MessageSquare, PanelRight, Pencil, RefreshCw, Zap } from "lucide-react";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 // The shadcn ResizablePanelGroup wrapper does not forward refs; the primitive does.
 import { PanelGroup, type ImperativePanelGroupHandle } from "react-resizable-panels";
@@ -54,12 +54,14 @@ import { StatusDot } from "@/components/framework/StatusPill";
 import { getProject, updateProject } from "@/lib/framework/storage";
 import { applyFeStatePatches, FE_REGENERATE_CREDITS, isInterviewStarted, normalizeTeaching, phase1Complete, reconcileTeachingSteps, type FeStatePatch } from "@/lib/framework/protocol";
 import { fakeAI } from "@/lib/mock/ai";
-import { replayInterview } from "@/lib/mock/interview";
+import { autoFillMessage, replayInterview, rewriteMessage, type RewriteMode } from "@/lib/mock/interview";
 import { buildRegenerateSystemPrompt, buildVoiceAndAudienceBlock } from "@/lib/framework/prompts";
 import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import { ExportPanel } from "@/components/framework/ExportPanel";
 import { UseTab } from "@/components/framework/UseTab";
-import { DEFAULT_FRAMEWORK_TITLE, FRAMEWORK_STAGE_KEYS, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
+import { BrainStatus } from "@/components/BrainStatus";
+import { STAGES, stageIndex } from "@/lib/framework/status";
+import { blankTeachingStep, FRAMEWORK_STAGE_KEYS, isProvisionalTitle, type FrameworkData, type FrameworkProject, type FrameworkProjectState, type FrameworkSetup, type TeachingComponentKey, type TeachingStep } from "@/lib/framework/contract";
 
 type Tab = "framework" | "teaching" | "use" | "export";
 const TAB_LABEL: Record<Tab, string> = { framework: "Framework", teaching: "Teaching plan", use: "Use it", export: "Export" };
@@ -82,8 +84,10 @@ export default function Workspace() {
   const handoff = (useLocation().state ?? {}) as { start?: boolean; firstAnswer?: string };
   const [project, setProject] = useState<FrameworkProject | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("framework");
-  const tabTouched = useRef(false);
+  // The output tab lives in the URL (?tab=) so it is copyable and back/forward works.
+  const [search, setSearch] = useSearchParams();
+  const urlTab = search.get("tab") as Tab | null;
+  const setTab = useCallback((t: Tab, replace = false) => setSearch((s) => { s.set("tab", t); return s; }, { replace }), [setSearch]);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   // chat-only until the first framework stage locks, then the output pane animates open.
   const [view, setView] = useState<View>("chat");
@@ -107,7 +111,6 @@ export default function Workspace() {
       if (cancelled) return;
       if (p) {
         setProject(p); setStarted(isInterviewStarted(p.state.chat_messages) || !!handoff.start);
-        if (!tabTouched.current) setTab(p.state.phase === 2 ? "teaching" : "framework");
         if (p.state.framework.stages.anchor === "done") setView("split");
       }
       setLoading(false);
@@ -142,14 +145,14 @@ export default function Workspace() {
   // Adopt the Creative Director's framework name as the title once, if the user never typed one.
   useEffect(() => {
     const name = project?.state.framework.framework_name?.trim();
-    if (!project || !name || !phase1Complete(project.state.framework) || project.title.trim() !== DEFAULT_FRAMEWORK_TITLE) return;
+    if (!project || !name || !phase1Complete(project.state.framework) || !isProvisionalTitle(project.title)) return;
     patchProject((p) => ({ ...p, title: name }));
   }, [project, patchProject]);
 
   const handleStatePatch = useCallback((patches: FeStatePatch[]) => {
     patchState((s) => applyFeStatePatches(s, patches));
-    if (patches.some((p) => p.phase === 2)) { tabTouched.current = true; setTab("teaching"); }
-  }, [patchState]);
+    if (patches.some((p) => p.phase === 2)) setTab("teaching", true);
+  }, [patchState, setTab]);
 
   // Open the output pane the first time something lands in the framework.
   const anchorDone = project?.state.framework.stages.anchor === "done";
@@ -178,7 +181,22 @@ export default function Workspace() {
       ? normalizeTeaching({ ...s.teaching, steps: reconcileTeachingSteps(s.teaching.steps.map((st, i) => ({ ...st, name: patch.named_steps?.[i]?.to || st.name })), s.teaching.steps.length ? patch.named_steps : null) })
       : s.teaching,
   }));
-  const handleComponentChange = (i: number, k: TeachingComponentKey, v: string) => patchState((s) => ({ ...s, teaching: normalizeTeaching({ ...s.teaching, steps: s.teaching.steps.map((st, j) => (j === i ? ({ ...st, [k]: v } as TeachingStep) : st)) }) }));
+  const patchStep = (i: number, f: (st: TeachingStep) => TeachingStep) => patchState((s) => ({ ...s, teaching: normalizeTeaching({ ...s.teaching, steps: s.teaching.steps.map((st, j) => (j === i ? f(st) : st)) }) }));
+  // An edit is new, unconfirmed text: it drops that component's verification.
+  const handleComponentChange = (i: number, k: TeachingComponentKey, v: string) => patchStep(i, (st) => ({ ...st, [k]: v, verified: st.verified?.filter((x) => x !== k) }));
+  const handleVerify = (i: number, k: TeachingComponentKey, on: boolean) => patchStep(i, (st) => ({ ...st, verified: on ? [...(st.verified ?? []).filter((x) => x !== k), k] : st.verified?.filter((x) => x !== k) }));
+  const handleRewrite = (i: number, label: string, mode: RewriteMode) => { setAutoFillStep(i); chatRef.current?.send(rewriteMessage(label, project?.state.teaching.steps[i]?.name || `Step ${i + 1}`, mode)); };
+  /** Reorder or add framework steps, keeping raw steps, names and teaching aligned. */
+  const handleStepOp = (op: { move: number; dir: -1 | 1 } | { add: true }) => patchState((s) => {
+    const f = s.framework;
+    if ("add" in op) {
+      const n = (f.named_steps?.length || f.raw_steps?.length || 0) + 1;
+      const name = `New step ${n}`;
+      return { ...s, framework: { ...f, raw_steps: [...(f.raw_steps ?? []), name], named_steps: f.named_steps?.length ? [...f.named_steps, { from: name, to: name }] : f.named_steps }, teaching: s.teaching.steps.length ? normalizeTeaching({ ...s.teaching, steps: [...s.teaching.steps, blankTeachingStep(name)] }) : s.teaching };
+    }
+    const swap = <T,>(a: T[] | undefined) => { if (!a || !a[op.move + op.dir]) return a; const b = [...a]; [b[op.move], b[op.move + op.dir]] = [b[op.move + op.dir], b[op.move]]; return b; };
+    return { ...s, framework: { ...f, raw_steps: swap(f.raw_steps), named_steps: swap(f.named_steps) }, teaching: s.teaching.steps.length ? normalizeTeaching({ ...s.teaching, steps: swap(s.teaching.steps)! }) : s.teaching };
+  });
   const handleRemoveStep = (i: number) => patchState((s) => {
     const steps = s.teaching.steps.filter((_, j) => j !== i);
     return { ...s, framework: { ...s.framework, raw_steps: s.framework.raw_steps?.filter((_, j) => j !== i), named_steps: s.framework.named_steps?.filter((_, j) => j !== i) }, teaching: steps.length ? normalizeTeaching({ ...s.teaching, steps }) : { ...s.teaching, current_step: 1, steps: [] } };
@@ -186,7 +204,7 @@ export default function Workspace() {
   const handleAutoFill = (i: number) => {
     const name = project?.state.teaching.steps[i]?.name || `Step ${i + 1}`;
     setAutoFillStep(i);
-    chatRef.current?.send(`For the framework step "${name}", draft all four teaching components yourself — Story, Strategy, Tactics, and Case Study. Write each one straight into the teaching plan on the right. Use your best judgement from everything we have covered; I will review and tweak after.`);
+    chatRef.current?.send(autoFillMessage(name));
   };
   const handleStreamingChange = useCallback((s: boolean) => { setChatStreaming(s); if (!s) setAutoFillStep(null); }, []);
 
@@ -216,15 +234,35 @@ export default function Workspace() {
   );
 
   const { state } = project;
+  const tab: Tab = urlTab && urlTab in TAB_LABEL ? urlTab : state.phase === 2 ? "teaching" : "framework";
+  const stage = stageIndex(state);
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
       <header className="shrink-0 bg-background px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-1">
-            <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 46))} className="w-auto min-w-[6ch] max-w-[46ch] truncate rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
-            <button type="button" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
-          </div>
-          <div className="flex items-center gap-3">
+          <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1">
+            <Link to="/" className="hidden shrink-0 rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:text-foreground sm:inline">Home</Link>
+            <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground/60 sm:block" aria-hidden />
+            <input ref={titleRef} value={project.title} onChange={(e) => patchProject((p) => ({ ...p, title: e.target.value }))} aria-label="Rename framework" placeholder="Name your framework" size={Math.max(8, Math.min(project.title.length + 1, 40))} className="w-auto min-w-[6ch] max-w-[40ch] truncate rounded-md bg-transparent px-2 py-1 text-[15px] font-bold outline-none transition-colors [field-sizing:content] hover:bg-foreground/5 focus:bg-foreground/[0.07]" />
+            <button type="button" className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground" onClick={() => { titleRef.current?.focus(); titleRef.current?.select(); }} aria-label="Rename framework"><Pencil className="h-3.5 w-3.5" /></button>
+          </nav>
+          {/* Interview stage, derived from the saved state. Guidance, not a lock: every tab stays open. */}
+          <ol aria-label={`Stage ${stage + 1} of 5: ${STAGES[stage]}`} className="hidden items-center gap-1 lg:flex">
+            {STAGES.map((st, i) => (
+              <li key={st} className="flex items-center gap-1" aria-current={i === stage ? "step" : undefined}>
+                {i > 0 && <span className={`h-px w-4 ${i <= stage ? "bg-emerald-500/50" : "bg-border"}`} aria-hidden />}
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs ${i === stage ? "bg-primary/15 font-semibold text-foreground ring-1 ring-primary/30" : i < stage ? "text-emerald-400" : "text-muted-foreground"}`}>
+                  <StatusDot status={i < stage ? "done" : i === stage ? "active" : "pending"} label={i + 1} />{st}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <span className="text-xs text-muted-foreground lg:hidden">Stage {stage + 1} of 5 · {STAGES[stage]}</span>
+          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
+            <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-xs ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+              {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> <span className="hidden sm:inline">Saving…</span></> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> <span className="hidden sm:inline">Save failed ·</span> <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> <span className="hidden sm:inline">Saved</span></> : null}
+            </span>
+            <BrainStatus className="hidden sm:inline-flex" />
             <div role="group" aria-label="Layout" className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
               {([["chat", MessageSquare, "Chat only"], ["split", Columns2, "Chat and output"], ["output", PanelRight, "Output only"]] as const).filter(([v]) => !(isMobile && v === "split")).map(([v, Icon, label]) => (
                 <button key={v} type="button" aria-pressed={effectiveView === v} title={label} aria-label={label} onClick={() => { viewTouched.current = true; setView(v); }} className={`grid h-7 w-8 place-items-center rounded-md transition-colors ${effectiveView === v ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
@@ -232,9 +270,6 @@ export default function Workspace() {
                 </button>
               ))}
             </div>
-            <span role="status" aria-live="polite" className={`inline-flex items-center gap-1.5 text-xs ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}>
-              {saveState === "saving" ? <><Loader2 className="h-3 w-3 animate-spin" /> <span className="hidden sm:inline">Saving…</span></> : saveState === "error" ? <><AlertTriangle className="h-3 w-3" /> <span className="hidden sm:inline">Save failed ·</span> <button type="button" className="underline" onClick={() => void flushSave()}>Retry</button></> : saveState === "saved" ? <><Check className="h-3 w-3" /> <span className="hidden sm:inline">Saved</span></> : null}
-            </span>
           </div>
         </div>
       </header>
@@ -255,7 +290,7 @@ export default function Workspace() {
           <header className="flex shrink-0 justify-center border-b border-border/60 px-4 py-2.5 sm:px-6 sm:py-3">
             <div role="tablist" className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border/60 bg-background/40 p-1">
               {(["framework", "teaching", "use", "export"] as const).map((t) => (
-                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => { tabTouched.current = true; setTab(t); }} className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm transition-colors active:scale-[0.98] ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
+                <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm transition-colors active:scale-[0.98] ${tab === t ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}>
                   {t === "export" ? <Download className="h-3.5 w-3.5 text-muted-foreground" /> : <StatusDot status={tabStatus(state, t)} />}{TAB_LABEL[t]}
                 </button>
               ))}
@@ -263,14 +298,13 @@ export default function Workspace() {
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
             <div className="mx-auto w-full max-w-[750px]">
-              {tab === "framework" ? <FrameworkTab framework={state.framework} setup={project.setup} onChange={handleFrameworkChange} /> : tab === "teaching" ? (
-                <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} />
-              ) : tab === "use" ? <UseTab framework={state.framework} teaching={state.teaching} onExport={() => { tabTouched.current = true; setTab("export"); }} /> : <ExportPanel project={project} />}
+              {tab === "framework" ? <FrameworkTab framework={state.framework} setup={project.setup} onChange={handleFrameworkChange} onStepOp={handleStepOp} onRemoveStep={handleRemoveStep} /> : tab === "teaching" ? (
+                <TeachingPlanTab teaching={state.teaching} onAutoFill={handleAutoFill} chatStreaming={chatStreaming} autoFillStep={autoFillStep} onComponentChange={handleComponentChange} onRemoveStep={handleRemoveStep} onVerify={handleVerify} onRewrite={handleRewrite} />
+              ) : tab === "use" ? <UseTab project={project} onExport={() => setTab("export")} /> : <ExportPanel project={project} />}
             </div>
           </div>
           <footer className="flex shrink-0 items-center gap-3 border-t border-border px-5 py-2.5 ">
-            <span className="text-[11px] text-muted-foreground tabular-nums">{FE_REGENERATE_CREDITS} credits</span>
-            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => setRegenOpen(true)} disabled={regenerating}>{regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Regenerate everything…</Button>
           </footer>
         </section>        </ResizablePanel>
       </PanelGroup>

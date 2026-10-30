@@ -1,9 +1,11 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Check, RefreshCw, Send, Square } from "lucide-react";
+import { ArrowDown, Brain, Check, RefreshCw, Send, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "./Markdown";
 import { fakeStream } from "@/lib/mock/ai";
-import { creativeDirectorTurn } from "@/lib/mock/interview";
+import { creativeDirectorTurn, quickReplies } from "@/lib/mock/interview";
+import { useBrain } from "@/lib/brain";
+import { AVATARS } from "@/lib/mock/data";
 import { buildChatSystemPrompt } from "@/lib/framework/prompts";
 import {
   detectGenerationFailure, extractFeStatePatches, stripFeState,
@@ -44,7 +46,7 @@ const persisted = (rt: Runtime[]): ChatMessage[] => rt.filter((m) => !m.streamin
 function splitGenLine(content: string) {
   const [first = "", ...rest] = content.split("\n");
   const head = first.replace(/\*\*/g, "").trim();
-  return /^generated\s+.+/i.test(head) ? { gen: head.replace(/[.\s]+$/, ""), rest: rest.join("\n").trim() } : { gen: null, rest: content };
+  return /^(generated|rewrote)\s+.+/i.test(head) ? { gen: head.replace(/[.\s]+$/, ""), rest: rest.join("\n").trim() } : { gen: null, rest: content };
 }
 
 function GenCard({ generating, label }: { generating: boolean; label: string }) {
@@ -90,6 +92,9 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const atBottom = useRef(true);
+  const [away, setAway] = useState(false);
+  const brain = useBrain();
+  const [brainDismissed, setBrainDismissed] = useState(false);
 
   useEffect(() => { onStreamingChange?.(streaming); }, [streaming, onStreamingChange]);
   useEffect(() => { const el = scrollRef.current; if (el && atBottom.current) el.scrollTop = el.scrollHeight; }, [runtime, streaming]);
@@ -171,10 +176,17 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
   const submit = (e: React.FormEvent) => { e.preventDefault(); const t = input.trim(); if (!t || streaming || starting || atLimit) return; setInput(""); void runTurn(t, false); };
   const retry = () => { if (streaming) return; setError(null); const t = lastTurn ?? { text: "", kickoff: true }; void runTurn(t.text, t.kickoff, true); };
   const visible = useMemo(() => runtime.filter((m) => m.role !== "system" || m.phase_divider), [runtime]);
+  const qr = started && !streaming && !error && !atLimit ? quickReplies(state) : null;
+  const avatar = AVATARS.find((a) => a.id === setup.customer_avatar_id);
+  // One relevant Brain finding at the moment it helps (the anchor question), never a profile dump.
+  const brainCard = brain && avatar && !brainDismissed && started && !streaming && state.phase === 1 && !state.framework.anchor && turnsUsed === 0 && visible.length > 0;
+  const prefill = (t: string) => { setInput(t); requestAnimationFrame(() => { const el = inputRef.current; if (!el) return; el.focus(); el.setSelectionRange(t.length, t.length); el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 220)}px`; }); };
+  const jump = () => { const el = scrollRef.current; if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }); };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div ref={scrollRef} role="log" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
+      <div className="relative min-h-0 flex-1">
+      <div ref={scrollRef} role="log" aria-live="polite" className="h-full overflow-y-auto" onScroll={(e) => { const el = e.currentTarget; atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; setAway(!atBottom.current); }}>
         <div className="mx-auto flex w-full max-w-[750px] flex-col gap-7 px-4 py-6 sm:gap-9 sm:px-5 sm:py-8">
           {visible.length === 0 && !streaming && (started ? (
             <p className="text-[15px]"><span className="text-shimmer">Getting your Creative Director ready…</span></p>
@@ -207,6 +219,27 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
               </div>
             );
           })}
+          {brainCard && (
+            <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-4">
+              <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary"><Brain className="h-3.5 w-3.5" /> From your Brain <span className="font-normal normal-case tracking-normal text-muted-foreground">· Customer Avatar</span></p>
+              <p className="mt-2 text-[15px]"><span className="font-semibold">{avatar.name}</span>, {avatar.tagline.charAt(0).toLowerCase() + avatar.tagline.slice(1)}.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" className="h-8" onClick={() => { prefill(`I help ${avatar.name.charAt(0).toLowerCase() + avatar.name.slice(1)} achieve `); setBrainDismissed(true); }}>Use this</Button>
+                <Button size="sm" variant="ghost" className="h-8" onClick={() => setBrainDismissed(true)}>Not relevant</Button>
+              </div>
+            </div>
+          )}
+          {qr?.choice && (
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{qr.title}</p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {qr.options.map((o, i) => (
+                  <li key={o.label}><button type="button" onClick={() => void runTurn(o.send, false)} className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-background/50 px-3 py-2.5 text-left text-sm font-medium transition-colors hover:border-primary/50 hover:bg-primary/[0.06]"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border text-xs text-muted-foreground">{i + 1}</span>{o.label}</button></li>
+                ))}
+                <li><button type="button" onClick={() => inputRef.current?.focus()} className="flex w-full items-center rounded-xl border border-dashed border-border px-3 py-2.5 text-left text-sm text-muted-foreground hover:text-foreground">Something else…</button></li>
+              </ul>
+            </div>
+          )}
           {error && (
             <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
               <p>{error}</p>
@@ -216,8 +249,18 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
         </div>
       </div>
 
+      {away && (
+        <button type="button" onClick={jump} className="absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium shadow-lg hover:bg-muted"><ArrowDown className="h-3.5 w-3.5" /> Jump to latest</button>
+      )}
+      </div>
+
       <div className="shrink-0 px-3 pb-3 pt-2 sm:px-5 sm:pb-4">
         <div className="mx-auto w-full max-w-[750px]">
+          {qr && !qr.choice && (
+            <div className="mb-2 flex flex-wrap gap-1.5" aria-label="Suggested answers">
+              {qr.options.map((o) => <button key={o.label} type="button" onClick={() => void runTurn(o.send, false)} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">{o.label}</button>)}
+            </div>
+          )}
           {atLimit ? (
             <div role="status" className="rounded-2xl border border-border bg-destructive/5 px-4 py-3">
               <strong className="block text-sm font-semibold">Message limit reached</strong>

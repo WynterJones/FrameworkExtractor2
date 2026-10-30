@@ -62,3 +62,24 @@ test("the turn that completes the last teaching component also assembles the sca
   }
   assert.ok(state.teaching.scale_variants?.multi_day, "variants written in the same turn as the last step");
 });
+
+test("statuses, the I-help anchor, scoped rewrites and proof labels", async () => {
+  const { libraryStatus, stageIndex, unverified } = await import("./status.ts");
+  const { buildFrameworkBriefMarkdown } = await import("./brief.ts");
+  const { rewriteMessage } = await import("../mock/interview.ts");
+  let s = applyFeStatePatches(initialFrameworkState(), extractFeStatePatches(creativeDirectorTurn(initialFrameworkState(), "I help agency owners achieve a 4-day week by systemizing delivery")));
+  assert.equal(s.framework.anchor?.dream_customer, "agency owners");
+  assert.equal(s.framework.anchor?.single_result, "a 4-day week");
+  assert.equal(libraryStatus(s), "Discovering");
+  const done = replayInterview(["a; b; c", "One Tuesday I texted 20 people by hand and nine booked.", "Export; Write; Send; Track", "yes", "2", 'For the framework step "Export", draft all four']);
+  assert.equal(libraryStatus(done), "Teaching in progress");
+  assert.equal(stageIndex(done), 3);
+  const step = { ...done.teaching.steps[0], verified: ["case_study" as const] };
+  s = { ...done, teaching: { ...done.teaching, steps: [step, ...done.teaching.steps.slice(1)] } };
+  const md = buildFrameworkBriefMarkdown({ id: "x", title: "T", source: "empty", setup: {}, state: s, archived: false, created_at: "", updated_at: "" });
+  assert.ok(md.includes("### Case Study\n"));
+  // A rewrite is new text: verification on that component is dropped.
+  s = applyFeStatePatches(s, extractFeStatePatches(creativeDirectorTurn(s, rewriteMessage("Case Study", step.name, "shorter"))));
+  assert.ok(!s.teaching.steps[0].verified?.includes("case_study"));
+  assert.ok(unverified(s).some((u) => u.key === "case_study"));
+});

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { GraduationCap, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { BadgeCheck, ChevronDown, GraduationCap, Pencil, ShieldAlert, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { RewriteMode } from "@/lib/mock/interview";
 import { Button } from "@/components/ui/button";
 import { EditableText } from "./EditableText";
 import { StatusDot, StatusPill, StepNum } from "./StatusPill";
@@ -13,6 +15,9 @@ const META: Record<TeachingComponentKey, { num: number; title: string; sub: stri
 };
 
 const text = (s: TeachingStep, k: TeachingComponentKey) => (s[k] ?? "").trim();
+/** Story and case study are factual claims: they need the user's confirmation before they count as real. */
+const NEEDS_PROOF: TeachingComponentKey[] = ["story", "case_study"];
+const REWRITES: [RewriteMode, string][] = [["regenerate", "Regenerate"], ["shorter", "Shorter"], ["more tactical", "More tactical"], ["more like my voice", "More like my voice"]];
 
 export interface TeachingPlanTabProps {
   teaching: TeachingData;
@@ -21,9 +26,12 @@ export interface TeachingPlanTabProps {
   autoFillStep: number | null;
   onComponentChange: (i: number, k: TeachingComponentKey, v: string) => void;
   onRemoveStep: (i: number) => void;
+  onVerify: (i: number, k: TeachingComponentKey, on: boolean) => void;
+  /** Scoped rewrite of one component through the chat. */
+  onRewrite: (i: number, label: string, mode: RewriteMode) => void;
 }
 
-export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillStep, onComponentChange, onRemoveStep }: TeachingPlanTabProps) {
+export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillStep, onComponentChange, onRemoveStep, onVerify, onRewrite }: TeachingPlanTabProps) {
   const steps = teaching.steps ?? [];
   const pointer = Math.min(Math.max(teaching.current_step - 1, 0), Math.max(steps.length - 1, 0));
   const [selected, setSelected] = useState(pointer);
@@ -92,10 +100,31 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
               <header className="mb-2 flex items-center gap-3">
                 <StepNum n={meta.num} />
                 <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>
-                <StatusPill status={status} pendingLabel="Not completed" />
+                {t && NEEDS_PROOF.includes(k) ? (step.verified?.includes(k)
+                  ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-400"><BadgeCheck className="h-3 w-3" /> Verified by you</span>
+                  : <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-400"><ShieldAlert className="h-3 w-3" /> Needs proof</span>
+                ) : <StatusPill status={status} pendingLabel="Not completed" />}
               </header>
               {t || editingBlank === blankKey ? (
+                <>
                 <EditableText value={step[k] ?? ""} ariaLabel={`${meta.title} for ${step.name}`} placeholder={meta.sub} autoFocus={!t} onChange={(v) => onComponentChange(i, k, v)} />
+                {t && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger disabled={chatStreaming} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"><Wand2 className="h-3 w-3" /> Rewrite <ChevronDown className="h-3 w-3" /></DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        {REWRITES.map(([mode, label]) => <DropdownMenuItem key={mode} onSelect={() => onRewrite(i, meta.title, mode)}>{label}</DropdownMenuItem>)}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    {NEEDS_PROOF.includes(k) && (
+                      <button type="button" onClick={() => onVerify(i, k, !step.verified?.includes(k))} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+                        <BadgeCheck className="h-3 w-3" /> {step.verified?.includes(k) ? "Unmark" : "This really happened"}
+                      </button>
+                    )}
+                    {k === "case_study" && !step.verified?.includes(k) && <span className="text-xs text-muted-foreground">Exports label it an illustrative example until you confirm it.</span>}
+                  </div>
+                )}
+                </>
               ) : autoFilling ? (
                 <p className="text-sm"><span className="text-shimmer">Generating…</span></p>
               ) : (

@@ -189,7 +189,10 @@ function applyStepUpdates(steps: TeachingStep[], updates: TeachingStepUpdate[]):
     const target = { ...next[idx] };
     for (const k of TEACHING_COMPONENT_KEYS) {
       const val = u[k];
-      if (typeof val === "string" && val.trim()) target[k] = val;
+      if (typeof val === "string" && val.trim()) {
+        if (val !== target[k]) target.verified = target.verified?.filter((v) => v !== k);
+        target[k] = val;
+      }
     }
     next[idx] = target;
   }
