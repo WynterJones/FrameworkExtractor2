@@ -5,7 +5,8 @@
  * then the Continue working card for the latest unfinished framework, or,
  * with none, three stages (Tell your story → Shape the method → Put it to
  * work). Background: public/home-bg.webp (sketched-framework artwork) under a
- * 75% background-colour overlay. Starting opens the new-framework dialog (?new=1), which also holds
+ * 75% background-colour overlay. Under the card: "Powered by" + the
+ * MarketingSecrets wordmark (public/ms-wordmark.svg), small and muted. Starting opens the new-framework dialog (?new=1), which also holds
  * the examples.
  */
 import { Link } from "react-router-dom";
@@ -39,6 +40,9 @@ export default function Index() {
             ))}
           </ol>
         )}
+        <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          Powered by <img src="/ms-wordmark.svg" alt="MarketingSecrets" className="h-3.5 w-auto opacity-80" />
+        </p>
       </div>
     </div>
   );
