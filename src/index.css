@@ -216,7 +216,7 @@ All colors MUST be HSL.
    2. A single combined `.text-gradient-*` class that bundles the gradient
       (as `background-image` LONGHAND) + the clip props in ONE rule (below). */
 /* The main call to action: semibold label, a three-stop blue gradient, a
-   darker rim, a top highlight, and a lifted blue glow that presses in on click. */
+   darker rim, a top highlight, and a dark drop shadow (no glow) that presses in on click. */
 @layer components {
   .btn-primary {
     @apply font-semibold tracking-[0.005em] text-primary-foreground transition-[filter,box-shadow,transform] duration-150;
@@ -228,7 +228,7 @@ All colors MUST be HSL.
       inset 0 -1px 0 hsl(0 0% 0% / 0.2),
       0 0 0 1px hsl(0 0% 0% / 0.45),
       0 2px 4px hsl(0 0% 0% / 0.45),
-      0 10px 24px -8px hsl(var(--primary) / 0.7);
+      0 8px 18px -6px hsl(0 0% 0% / 0.7);
   }
   .btn-primary:hover {
     filter: brightness(1.08);
@@ -237,7 +237,7 @@ All colors MUST be HSL.
       inset 0 -1px 0 hsl(0 0% 0% / 0.2),
       0 0 0 1px hsl(0 0% 0% / 0.45),
       0 3px 6px hsl(0 0% 0% / 0.45),
-      0 14px 30px -8px hsl(var(--primary) / 0.85);
+      0 10px 22px -6px hsl(0 0% 0% / 0.75);
   }
   .btn-primary:active {
     transform: translateY(1px);
