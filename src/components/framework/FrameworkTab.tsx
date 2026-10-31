@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, AudioLines, Compass, Plus, Target, Trash2, User } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { AVATARS, CHARACTERS, VOICES } from "@/lib/mock/data";
 import { EditableText } from "./EditableText";
 import { StatusPill, StepNum } from "./StatusPill";
@@ -104,16 +104,16 @@ function SetupStrip({ setup }: { setup: FrameworkSetup }) {
   const c = CHARACTERS.find((x) => x.id === setup.character_id);
   const v = VOICES.find((x) => x.id === setup.voice_id);
   const a = AVATARS.find((x) => x.id === setup.customer_avatar_id);
-  const cells: { Icon: typeof User; label: string; name?: string; sub?: string }[] = [
-    { Icon: User, label: "Attractive Character", name: c?.name, sub: c?.tagline },
-    { Icon: AudioLines, label: "Voice", name: v?.name, sub: c ? `${c.name}'s voice` : undefined },
-    { Icon: Target, label: "Customer Avatar", name: a?.name, sub: a?.tagline },
+  const cells: { art: string; label: string; name?: string; sub?: string }[] = [
+    { art: "character", label: "Attractive Character", name: c?.name, sub: c?.tagline },
+    { art: "voice", label: "Voice", name: v?.name, sub: c ? `${c.name}'s voice` : undefined },
+    { art: "avatar", label: "Customer Avatar", name: a?.name, sub: a?.tagline },
   ];
   return (
     <div className="mb-6 grid gap-px overflow-hidden rounded-xl border border-border/60 bg-border/60 sm:grid-cols-3">
-      {cells.map(({ Icon, label, name, sub }) => (
-        <div key={label} className="flex items-start gap-3 bg-background/40 px-4 py-3">
-          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Icon className="h-3.5 w-3.5" /></span>
+      {cells.map(({ art, label, name, sub }) => (
+        <div key={label} className="flex items-center gap-3 bg-background/40 px-4 py-3">
+          <img src={`/art/icon-${art}.webp`} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
             <p className="truncate text-sm font-semibold">{name ?? <span className="font-normal text-muted-foreground">Not set</span>}</p>
@@ -129,8 +129,8 @@ export function FrameworkTab({ framework, setup, onChange, onStepOp, onRemoveSte
   const empty = FRAMEWORK_STAGE_KEYS.every((k) => !frameworkStageHasData(k, framework));
   if (empty) {
     return (
-      <div className="flex flex-col items-center gap-2 px-6 py-20 text-center">
-        <Compass className="h-6 w-6 text-muted-foreground" />
+      <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
+        <img src="/art/empty-framework.webp" alt="" className="mb-3 w-full max-w-sm rounded-2xl border border-border/60" />
         <h4 className="text-[15px] font-semibold">Nothing extracted yet</h4>
         <p className="max-w-[36ch] text-sm text-muted-foreground">Answer the questions on the left and your framework fills in here, one stage at a time.</p>
       </div>

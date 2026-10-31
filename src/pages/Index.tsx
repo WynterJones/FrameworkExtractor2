@@ -10,12 +10,12 @@
  * the examples.
  */
 import { Link } from "react-router-dom";
-import { MessageSquare, Plus, Rocket, Shapes } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContinueCard, useProjects } from "@/components/framework/Library";
 import { libraryStatus } from "@/lib/framework/status";
 
-const STEPS = [[MessageSquare, "Tell your story", "Talk through what you do and how you learned it."], [Shapes, "Shape the method", "Name the steps and the framework."], [Rocket, "Put it to work", "Teach it, sell it, export it."]] as const;
+const STEPS = [["story", "Tell your story", "Talk through what you do and how you learned it."], ["steps", "Shape the method", "Name the steps and the framework."], ["rocket", "Put it to work", "Teach it, sell it, export it."]] as const;
 
 export default function Index() {
   const all = useProjects();
@@ -31,9 +31,9 @@ export default function Index() {
         </header>
         {all === null ? null : resume ? <ContinueCard p={resume} /> : (
           <ol className="grid gap-3 sm:grid-cols-3">
-            {STEPS.map(([Icon, t, d], i) => (
+            {STEPS.map(([art, t, d], i) => (
               <li key={t} className="rounded-2xl border border-border/60 bg-card p-4">
-                <Icon className="h-5 w-5 text-primary" />
+                <img src={`/art/icon-${art}.webp`} alt="" className="h-14 w-auto rounded-lg" />
                 <p className="mt-3 text-sm font-semibold">{i + 1}. {t}</p>
                 <p className="mt-0.5 text-sm text-muted-foreground">{d}</p>
               </li>

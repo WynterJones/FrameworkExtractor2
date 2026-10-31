@@ -74,6 +74,7 @@ export default function Tutorial() {
 
           <Section id="what" title="What it does">
             <p>You already have a method: the way you get clients their result. It just lives in your head. Framework Extractor interviews you about it, turns your answers into a named framework of 3 to 7 steps, and then helps you write a teaching plan for each step.</p>
+            <img src="/art/flow-strip.webp" alt="Scattered notes flowing into five numbered steps" className="w-full rounded-xl border border-border/60" />
             <p>You talk on the left; the framework builds itself on the right as you go. Everything saves automatically.</p>
           </Section>
 
@@ -123,6 +124,7 @@ export default function Tutorial() {
           </Section>
 
           <Section id="proof" title="5. Mark what's real">
+            <img src="/art/tutorial-proof.webp" alt="Two stamps, a verified check and an illustrative lightbulb, beside a case study" className="w-full rounded-xl border border-border/60" />
             <p>Drafted stories and case studies can sound true without being true. So each one carries a label:</p>
             <List items={[
               <><B>Verified by you</B>: this really happened.</>,
@@ -139,6 +141,7 @@ export default function Tutorial() {
           </Section>
 
           <Section id="ai" title="7. Turn it into anything">
+            <img src="/art/tutorial-ai.webp" alt="One document branching into a website, email, phone post, slides and a course" className="w-full rounded-xl border border-border/60" />
             <p>The Markdown file is built to be handed to an AI. Give it to your favorite assistant, like <B>Claude</B> or <B>ChatGPT</B>, and it can turn your framework into websites, PDFs, emails, posts, slides or a whole course, all from the same source.</p>
             <List ordered items={[
               <>In Export, click <B>Download .md</B> (or <B>Copy</B> to grab the text).</>,

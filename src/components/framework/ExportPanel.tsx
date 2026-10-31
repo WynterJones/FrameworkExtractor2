@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { buildFrameworkBriefMarkdown, frameworkName, slugify } from "@/lib/framework/brief";
 import type { FrameworkProject } from "@/types";
 import { evidenceOf } from "@/lib/framework/contract";
+import { teachingDone } from "@/lib/framework/status";
 
 export function ExportPanel({ project }: { project: FrameworkProject }) {
   const md = useMemo(() => buildFrameworkBriefMarkdown(project), [project]);
@@ -29,6 +30,15 @@ export function ExportPanel({ project }: { project: FrameworkProject }) {
 
   return (
     <div className="pt-2">
+      {teachingDone(project.state) && (
+        <figure className="relative mb-5 overflow-hidden rounded-2xl border border-border/60">
+          <img src="/art/ready.webp" alt="" className="h-44 w-full object-cover object-[center_40%]" />
+          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-5 pb-4 pt-12">
+            <p className="font-display text-lg font-semibold text-white">Your framework is ready.</p>
+            <p className="text-sm text-white/75">Download it, then give it to your favorite AI to make anything from it.</p>
+          </figcaption>
+        </figure>
+      )}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Give this file to Claude, ChatGPT or any AI and ask it for a website, PDF guide, emails or posts. <Link to="/tutorial#ai" className="text-primary hover:underline">See example prompts</Link></p>

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4 px-4">
+        <img src="/art/not-found.webp" alt="" className="mx-auto w-full max-w-sm rounded-2xl border border-border/60" />
         <h1 className="font-display text-5xl font-bold">404</h1>
         <p className="text-muted-foreground">That page does not exist.</p>
         <Button asChild><Link to="/">Back home</Link></Button>

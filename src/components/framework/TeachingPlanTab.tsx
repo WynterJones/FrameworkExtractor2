@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { BadgeCheck, ChevronDown, GraduationCap, Lightbulb, Pencil, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { BadgeCheck, ChevronDown, Lightbulb, Pencil, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { RewriteMode } from "@/lib/mock/interview";
 import { Button } from "@/components/ui/button";
 import { EditableText } from "./EditableText";
-import { EvidenceBadge, StatusDot, StatusPill, StepNum } from "./StatusPill";
+import { EvidenceBadge, StatusDot, StatusPill } from "./StatusPill";
 import { evidenceOf, isProofKey, TEACHING_COMPONENT_KEYS, type Evidence, type ProofKey, type TeachingComponentKey, type TeachingData, type TeachingStep } from "@/lib/framework/contract";
 
-const META: Record<TeachingComponentKey, { num: number; title: string; sub: string }> = {
-  story: { num: 1, title: "Story", sub: "How you earned this lesson — open the teaching with this scene." },
-  strategy: { num: 2, title: "Strategy", sub: "The underlying principle — the why behind the step." },
-  tactics: { num: 3, title: "Tactics", sub: "The concrete how — sub-steps, tools, and pitfalls." },
-  case_study: { num: 4, title: "Case Study", sub: "A named example proving the step works." },
+const META: Record<TeachingComponentKey, { num: number; art: string; title: string; sub: string }> = {
+  story: { num: 1, art: "story-part", title: "Story", sub: "How you earned this lesson — open the teaching with this scene." },
+  strategy: { num: 2, art: "strategy", title: "Strategy", sub: "The underlying principle — the why behind the step." },
+  tactics: { num: 3, art: "tactics", title: "Tactics", sub: "The concrete how — sub-steps, tools, and pitfalls." },
+  case_study: { num: 4, art: "case", title: "Case Study", sub: "A named example proving the step works." },
 };
 
 const text = (s: TeachingStep, k: TeachingComponentKey) => (s[k] ?? "").trim();
@@ -41,8 +41,8 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
 
   if (steps.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 px-6 py-20 text-center">
-        <GraduationCap className="h-6 w-6 text-muted-foreground" />
+      <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
+        <img src="/art/empty-teaching.webp" alt="" className="mb-3 w-full max-w-sm rounded-2xl border border-border/60" />
         <h4 className="text-[15px] font-semibold">Teaching plan not started</h4>
         <p className="max-w-[36ch] text-sm text-muted-foreground">Finish the framework on Phase 1 and the teaching plan opens up here.</p>
       </div>
@@ -97,8 +97,8 @@ export function TeachingPlanTab({ teaching, onAutoFill, chatStreaming, autoFillS
           return (
             <section key={k} className={`py-5 ${status === "pending" && !t ? "opacity-60" : status === "active" ? "my-2 -mx-4 rounded-xl bg-primary/[0.06] px-4 ring-1 ring-primary/20 sm:-mx-5 sm:px-5" : ""}`}>
               <header className="mb-2 flex items-center gap-3">
-                <StepNum n={meta.num} />
-                <h4 className="flex-1 font-display text-[15px] font-semibold">{meta.title}</h4>
+                <img src={`/art/icon-${meta.art}.webp`} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                <h4 className="flex-1 font-display text-[15px] font-semibold"><span className="mr-1.5 text-muted-foreground tabular-nums">{meta.num}</span>{meta.title}</h4>
                 {t && isProofKey(k) ? <EvidenceBadge evidence={evidenceOf(step, k)} /> : <StatusPill status={status} pendingLabel="Not completed" />}
               </header>
               {t || editingBlank === blankKey ? (

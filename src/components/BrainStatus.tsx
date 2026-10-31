@@ -15,8 +15,13 @@ export function BrainStatus({ side = "bottom", align = "end", className = "" }: 
         {connected ? "Brain connected" : "Brain unavailable"}
       </PopoverTrigger>
       <PopoverContent side={side} align={align} className="w-64 p-3.5 text-sm">
-        <p className="font-medium">{connected ? `Connected to ${BRAIN_PROVIDER}` : `${BRAIN_PROVIDER} Brain unavailable`}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{connected ? "Context provided by your Brain. Synced just now." : "The interview still works. You pick the character, voice and avatar yourself."}</p>
+        <div className="flex items-start gap-3">
+          <img src="/art/icon-brain.webp" alt="" className={`h-10 w-10 shrink-0 rounded-lg ${connected ? "" : "opacity-50 grayscale"}`} />
+          <div>
+            <p className="font-medium">{connected ? `Connected to ${BRAIN_PROVIDER}` : `${BRAIN_PROVIDER} Brain unavailable`}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{connected ? "Context provided by your Brain. Synced just now." : "The interview still works. You pick the character, voice and avatar yourself."}</p>
+          </div>
+        </div>
         {connected ? (
           <>
             <ul className="mt-3 space-y-1 text-xs">
