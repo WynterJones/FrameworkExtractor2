@@ -45,7 +45,7 @@ export interface FrameworkChatProps {
   /** Edit answer on a user message: the parent rewinds to just before it. */
   onEditMessage: (id: string) => void;
   /** Milestone card: open an output tab. */
-  onReview: (tab: "framework" | "use") => void;
+  onReview: (tab: "framework" | "export") => void;
 }
 export interface FrameworkChatHandle { send: (text: string) => void; prefill: (text: string) => void }
 
@@ -234,7 +234,7 @@ export const FrameworkChat = forwardRef<FrameworkChatHandle, FrameworkChatProps>
                 <span className="h-px flex-1 bg-border/60" /><Check className="h-3 w-3 text-emerald-500/80" strokeWidth={2.5} /><span><span className="font-medium text-foreground/80">Framework locked</span> · Phase 2, the teaching plan</span><span className="h-px flex-1 bg-border/60" />
               </div>
             );
-            if (m.milestone !== undefined) return <MilestoneCard key={m.id} stage={m.milestone} summary={m.content} onReview={() => onReview(m.milestone! >= 3 ? "use" : "framework")} />;
+            if (m.milestone !== undefined) return <MilestoneCard key={m.id} stage={m.milestone} summary={m.content} onReview={() => onReview(m.milestone! >= 3 ? "export" : "framework")} />;
             if (m.role === "user") return (
               <div key={m.id} className="group flex items-start justify-end gap-2">
                 {!streaming && <button type="button" onClick={() => onEditMessage(m.id)} aria-label="Edit this answer" title="Edit this answer" className="mt-2 grid h-7 w-7 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"><Pencil className="h-3.5 w-3.5" /></button>}

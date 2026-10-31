@@ -214,7 +214,7 @@ function phase2Turn(state: FrameworkProjectState, text: string | null): string {
       return `Every step has all four pieces. I assembled the scale variants (60-second through multi-day) from the material we captured; they are in the brief. Anything missing or wrong? Otherwise download the brief and go teach it.` +
         block({ teaching: { scale_variants: scaleVariants(state) } });
     }
-    return `The brief is complete. Download it as Markdown or PowerPoint, or keep editing any field on the right. If you want to deepen a step, say which one.`;
+    return `The brief is complete. Download it as Markdown from Export, or keep editing any field on the right. If you want to deepen a step, say which one.`;
   }
   const step = steps[idx];
   const num = idx + 1;

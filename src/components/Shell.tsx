@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useSearchParams } from "react-router-dom";
-import { Compass, Home, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
+import { BookOpen, Compass, Home, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BrainStatus } from "@/components/BrainStatus";
@@ -13,7 +13,7 @@ import "@/lib/mock/data";
 
 /**
  * Framework Extractor's own shell: a collapsible left sidebar (brand,
- * + New framework, Home, then every framework (newest first, a "…" menu
+ * + New framework, Home, Tutorial, then every framework (newest first, a "…" menu
  * each, archived ones behind a toggle); the quiet Brain status and the
  * account at the bottom) beside the routed page. Nothing from
  * the MarketingSecretsAI host appears here. `?new=1` on any route opens the
@@ -49,7 +49,7 @@ export default function Shell() {
         <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
       </Tooltip>
     ) : children;
-  const nav: [string, string, typeof Home][] = [["/", "Home", Home]];
+  const nav: [string, string, typeof Home][] = [["/", "Home", Home], ["/tutorial", "Tutorial", BookOpen]];
   /** One framework: a chip (step count, else the initial; emerald when Ready), the title, a "…" menu on hover. */
   const FrameworkRow = ({ p }: { p: FrameworkProject }) => {
     const n = stepNames(p).length;

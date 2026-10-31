@@ -1,8 +1,9 @@
 /**
  * Framework Extractor — routes. Every page renders inside Shell (a collapsible
- * left sidebar: New framework, Home, the frameworks).
+ * left sidebar: New framework, Home, Tutorial, the frameworks).
  *   /                → Index      (Home: start a framework, continue the latest)
  *   /framework/:id   → Workspace  (interview + live framework; ?tab= picks the output tab)
+ *   /tutorial        → Tutorial   (how-to docs for the whole flow)
  *   any route ?new=1 → the new-framework dialog (Shell)
  *   *                → NotFound
  * Dark theme by default (near-black, neutral greys, ocean-blue primary).
@@ -15,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Shell from "@/components/Shell";
 import Index from "@/pages/Index";
 import Workspace from "@/pages/Workspace";
+import Tutorial from "@/pages/Tutorial";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -31,6 +33,7 @@ export default function App() {
               <Route element={<Shell />}>
                 <Route path="/" element={<Index />} />
                 <Route path="/framework/:id" element={<Workspace />} />
+                <Route path="/tutorial" element={<Tutorial />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

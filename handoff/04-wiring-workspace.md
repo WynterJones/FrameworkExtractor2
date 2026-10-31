@@ -9,7 +9,7 @@ Build:
 - Workspace: load with getProject; autosave title / setup / state with a 1 s debounce and a flush on unmount via updateProject; the save chip reflects Saving… / Saved / Save failed · Retry.
 - FrameworkChat: replace the placeholder reply with fetch("/api/ai/framework-chat", { method: "POST", body: { project_id, messages, language: "English" } }) reading the NDJSON stream; strip <fe-state> from the visible text with stripFeState on every delta; on done, extractFeStatePatches + onStatePatch; detectGenerationFailure drives the two error messages in prd.md §2.2; Stop aborts the fetch and keeps the partial text; Try again re-sends the last turn without duplicating the user bubble.
 - Regenerate → fetch("/api/ai/framework-regenerate") and replace phase/framework/teaching, then save.
-- Download → Markdown uses buildFrameworkBriefMarkdown (src/lib/framework/brief.ts). PowerPoint stays a toast "PowerPoint export is coming" for v1.
+- Download → Markdown uses buildFrameworkBriefMarkdown (src/lib/framework/brief.ts). Markdown is the only export format.
 - Delete src/lib/placeholder.ts and any remaining mock file (src/lib/mock/*).
 
 Done when: creating a framework, pressing Start, and answering the Anchor question fills Stage 1 on the right from the real model, and a reload shows the same thread and framework.

@@ -77,7 +77,7 @@ export function MilestoneCard({ stage, summary, onReview }: { stage: number; sum
         <p className="text-sm font-semibold">{STAGES[stage]} complete{STAGES[stage + 1] ? <span className="font-normal text-muted-foreground"> · next: {STAGES[stage + 1]}</span> : null}</p>
         <p className="truncate text-xs text-muted-foreground" title={summary}>{summary}</p>
       </div>
-      <Button size="sm" variant="ghost" className="h-8 shrink-0" onClick={onReview}>{stage >= 3 ? "Open Use it" : "Review framework"} <ArrowRight className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" className="h-8 shrink-0" onClick={onReview}>{stage >= 3 ? "Open Export" : "Review framework"} <ArrowRight className="h-3.5 w-3.5" /></Button>
     </div>
   );
 }
