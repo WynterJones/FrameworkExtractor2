@@ -5,7 +5,7 @@
  * then the Continue working card for the latest unfinished framework, or,
  * with none, three stages (Tell your story → Shape the method → Put it to
  * work). Background: public/home-bg.webp (sketched-framework artwork) under a
- * 55% background-colour overlay. Starting opens the new-framework dialog (?new=1), which also holds
+ * 75% background-colour overlay. Starting opens the new-framework dialog (?new=1), which also holds
  * the examples.
  */
 import { Link } from "react-router-dom";
@@ -21,7 +21,7 @@ export default function Index() {
   const resume = all?.find((p) => !p.archived && libraryStatus(p.state) !== "Ready");
 
   return (
-    <div className="h-full overflow-y-auto bg-cover bg-center" style={{ backgroundImage: "linear-gradient(hsl(var(--background) / 0.55), hsl(var(--background) / 0.55)), url(/home-bg.webp)" }}>
+    <div className="h-full overflow-y-auto bg-cover bg-center" style={{ backgroundImage: "linear-gradient(hsl(var(--background) / 0.75), hsl(var(--background) / 0.75)), url(/home-bg.webp)" }}>
       <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center gap-8 px-4 py-10 sm:px-8">
         <header className="text-center">
           <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Pull the framework out of your head.</h1>

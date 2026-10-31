@@ -54,8 +54,12 @@ export function NewFrameworkDialog({ open, onClose }: { open: boolean; onClose: 
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-xl gap-0 p-0">
-        <DialogHeader className="space-y-1 p-6 pb-4 text-left">
+      <DialogContent className="max-w-xl gap-0 overflow-hidden p-0">
+        <div className="relative h-44 overflow-hidden" aria-hidden>
+          <img src="/new-framework.webp" alt="" className="h-full w-full object-cover object-[center_45%]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        </div>
+        <DialogHeader className="-mt-6 relative space-y-1 px-6 pb-4 text-left">
           <DialogTitle className="pr-8 font-display text-xl">What would you like to turn into a framework?</DialogTitle>
           <DialogDescription>Optional. You can also just start talking.</DialogDescription>
         </DialogHeader>

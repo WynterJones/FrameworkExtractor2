@@ -64,6 +64,12 @@ export default function Tutorial() {
             <p className="text-sm font-medium text-primary">Tutorial</p>
             <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">How to use Framework Extractor</h1>
             <p className="mt-2 text-muted-foreground">About ten minutes from a blank page to a framework you can teach. Here is every step.</p>
+            <figure className="relative mt-6 overflow-hidden rounded-2xl border border-border/60">
+              <img src="/tutorial-hero.webp" alt="Four stages: a rough idea, the interview, numbered steps, and a finished course" className="aspect-[16/9] w-full object-cover" />
+              <figcaption className="absolute inset-x-0 bottom-0 grid grid-cols-4 bg-gradient-to-t from-black/80 to-transparent px-2 pb-3 pt-10 text-center text-xs font-medium text-white/85 sm:text-sm">
+                <span>Your idea</span><span>The interview</span><span>Your steps</span><span>Put to work</span>
+              </figcaption>
+            </figure>
           </header>
 
           <Section id="what" title="What it does">
