@@ -215,6 +215,37 @@ All colors MUST be HSL.
         <h1 className="bg-gradient-to-r from-primary to-accent text-gradient">…</h1>
    2. A single combined `.text-gradient-*` class that bundles the gradient
       (as `background-image` LONGHAND) + the clip props in ONE rule (below). */
+/* The main call to action: semibold label, a three-stop blue gradient, a
+   darker rim, a top highlight, and a lifted blue glow that presses in on click. */
+@layer components {
+  .btn-primary {
+    @apply font-semibold tracking-[0.005em] text-primary-foreground transition-[filter,box-shadow,transform] duration-150;
+    border: 1px solid hsl(199 89% 28%);
+    background: linear-gradient(180deg, hsl(var(--primary-bright)) 0%, hsl(var(--primary)) 50%, hsl(var(--primary-deep)) 100%);
+    text-shadow: 0 1px 0 hsl(0 0% 0% / 0.25);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.35),
+      inset 0 -1px 0 hsl(0 0% 0% / 0.2),
+      0 0 0 1px hsl(0 0% 0% / 0.45),
+      0 2px 4px hsl(0 0% 0% / 0.45),
+      0 10px 24px -8px hsl(var(--primary) / 0.7);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.4),
+      inset 0 -1px 0 hsl(0 0% 0% / 0.2),
+      0 0 0 1px hsl(0 0% 0% / 0.45),
+      0 3px 6px hsl(0 0% 0% / 0.45),
+      0 14px 30px -8px hsl(var(--primary) / 0.85);
+  }
+  .btn-primary:active {
+    transform: translateY(1px);
+    filter: brightness(0.96);
+    box-shadow: inset 0 2px 4px hsl(0 0% 0% / 0.35), 0 0 0 1px hsl(0 0% 0% / 0.45);
+  }
+}
+
 @layer utilities {
   /* "Thinking" text: a silver highlight sweeping left to right across dark grey,
      the way ChatGPT / Cursor show a pending state. */

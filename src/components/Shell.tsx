@@ -99,7 +99,7 @@ export default function Shell() {
 
         <nav aria-label="Framework Extractor" className={`flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2 ${collapsed ? "items-center" : ""}`}>
           <Tip label="New framework">
-            <Link to="?new=1" className={`mb-2 flex h-9 items-center rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 ${collapsed ? "w-9 justify-center" : "gap-2 px-2.5"}`}>
+            <Link to="?new=1" className={`mb-2 flex h-9 items-center btn-primary rounded-lg text-sm ${collapsed ? "w-9 justify-center" : "gap-2 px-2.5"}`}>
               <Plus className="h-4 w-4 shrink-0" />{!collapsed && "New framework"}
             </Link>
           </Tip>
